@@ -1,0 +1,161 @@
+
+
+extern "C" void longjump(uint64* registers);
+extern "C" int setjump(uint64* registers);
+
+
+
+_thread* _thread  running = nullptr;
+uint32 const _thread  THREAD_SIZE_IN_BLOCKS = (sizeof(_thread) + MEM_BLOCK_SIZE -1) / MEM_BLOCK_SIZE;
+bool _thread  asyncrhonousMode = false;
+
+
+int _thread  createThread(_thread** handle, void (*start_routine)(void*), void *arg, void *stack_space) {
+    uint64 * topOfStack;
+    _thread* new_thread;
+
+    topOfStack = (uint64*)((char*) stack_space + DEFAULT_STACK_SIZE -1);
+    new_thread = (_thread*) MemoryAllocator  allocate(THREAD_SIZE_IN_BLOCKS);
+    *handle = new_thread;
+
+    new_thread->nextThread = nullptr;
+    new_thread->parent = _thread  running;
+    new_thread->returnValueFromSemaphore = 0;
+    new_thread->childBeingWaitedFor = nullptr;
+    new_thread->isWaitingToJoin = false;
+    new_thread->finished = false;
+    new_thread->stack = (uint64*) stack_space;
+    new_thread->body = start_routine;
+    new_thread->arg = arg;
+    new_thread->sleepTime = 0;
+
+    for(int i=0;i<34;i++) {
+        new_thread->registers[i] = 0;
+    }
+
+    new_thread->registers[1] = (uint64) _thread  threadBodyWrapper;   //ra = start_routine
+    new_thread->registers[2] = (uint64) topOfStack;          //sp = stack_space
+
+    Scheduler  put(new_thread);
+
+    return 0;
+}
+
+void _thread  dispatch() {
+    _timer  resetTimer();
+
+    _thread* oldThread = _thread  running;
+
+    if(oldThread != Scheduler  idleThread){
+        Scheduler  put(oldThread);
+    }
+    _thread  running = Scheduler  get();
+
+    if(oldThread != _thread  running){
+        yield(oldThread, _thread  running);
+    }
+
+}
+
+void _thread  yield(_thread* oldThread, _thread* newThread) {
+    if(setjump(oldThread->registers) == 0){
+        longjump(newThread->registers);
+    }
+}
+
+
+int _thread  exit_thread() {
+    _thread  running->setFinished(true);
+    unblockParentIfWaitingToJoin();
+
+    dropContext();
+    return -1;
+}
+
+void _thread  switchToUserMode() {
+    asm volatile ("li t0, 0x100");
+    asm volatile ("csrc sstatus, t0");
+    asm volatile ("csrw sepc, ra");
+    asm volatile ("sret");
+}
+
+void _thread  threadBodyWrapper() {
+    _thread  switchToUserMode();
+    _thread  running->body(_thread  running->arg);
+    thread_exit();
+}
+
+void _thread  dropContext() {
+    _timer  resetTimer();
+    _thread* newThread = Scheduler  get();
+    _thread  running = newThread;
+    longjump(newThread->registers);
+}
+
+void _thread  destroyThread(_thread* thread) {
+    MemoryAllocator  free(thread->stack);
+    MemoryAllocator  free(thread);
+}
+
+
+
+
+
+void  _thread  thread_join(_thread *child) {
+    _thread* parent = _thread  running;
+
+    if(child->parent != parent){
+        print("\nA child called join on a thread that is not its parent\n",0);
+        return;
+    }
+
+    if(child->isFinished() == false){
+        parent->isWaitingToJoin = true;
+        parent->childBeingWaitedFor = child;
+        block();
+    }
+}
+
+void _thread  block() {
+    _timer  resetTimer();
+    _thread* oldThread = _thread  running;
+    _thread  running = Scheduler  get();
+    yield(oldThread, _thread  running);
+}
+
+void _thread  unblockParentIfWaitingToJoin() {
+    _thread* parent = _thread  running->parent;
+
+    if(parent->isFinished() == true) return;
+
+    if(parent->isWaitingToJoin  parent->childBeingWaitedFor == _thread  running){
+            parent->isWaitingToJoin = false;
+            parent->childBeingWaitedFor = nullptr;
+            Scheduler  put(parent);
+        }
+ }
+
+
+void _thread  initMainThread() {
+    _thread* mainThread = (_thread*) MemoryAllocator  allocate(THREAD_SIZE_IN_BLOCKS);
+    mainThread->childBeingWaitedFor = nullptr;
+    mainThread->isWaitingToJoin = false;
+    mainThread->parent = nullptr;
+    mainThread->stack = nullptr;
+    mainThread->body = nullptr;
+    mainThread->finished = false;
+    mainThread->sleepTime = 0;
+
+    _thread  running = mainThread;
+}
+
+
+void _thread  sleep(_thread * thread, uint64 time) {
+    thread->sleepTime = time;
+    _timer  addToSleepList(thread);
+    _thread  block();
+}
+
+
+
+
