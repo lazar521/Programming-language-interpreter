@@ -1,19 +1,22 @@
 package lexer;
+import java.util.HashMap;
+
 import token.*;
+import java.util.ArrayList;
+
 
 public class Lexer {
-    private TokenList tokenList;
+    private ArrayList<Token> tokenList;
     private int lineNumber;
     private CharacterIterator iter;
 
 public Lexer(){}
 
-    public TokenList makeTokens(String text) throws Exception {
-        this.tokenList = new TokenList();
+    public ArrayList<Token>  makeTokens(String text) throws Exception {
+        this.tokenList = new ArrayList<Token>();
         this.iter = new CharacterIterator(text);
         this.lineNumber = 1;
 
-        skipNewlines();
         tokenzieText();
 
         return tokenList;
@@ -21,6 +24,7 @@ public Lexer(){}
 
 
     private void tokenzieText() throws Exception {
+       
         while(iter.hasCharacters()){
             char c = iter.getChar();
             iter.advance();
@@ -65,12 +69,10 @@ public Lexer(){}
                     break;
 
                 case ' ':
-                    skipWhitespace();
                     break;
 
                 case '\n':
                     lineNumber++;
-                    skipNewlines();
                     break;
 
                 case '"':
@@ -98,7 +100,7 @@ public Lexer(){}
         }
 
         String word = sb.toString();
-        if(Keywords.isKeyword(word)) addToken(Keywords.getType(word));
+        if(isKeyword(word)) addToken(getKeywordType(word));
         else addToken(word, TType.IDENTIFIER);
     }
 
@@ -116,7 +118,7 @@ public Lexer(){}
         addToken(sb.toString(), TType.NUM_LITERAL);
     }
 
-    private void tokenizeString() throws UnexpectedCharacterException {
+    private void tokenizeString() throws Exception {
         StringBuilder sb = new StringBuilder();
         char c = iter.getChar();
         while(iter.hasCharacters() && c != '"' &&  c != '\n'){
@@ -134,20 +136,11 @@ public Lexer(){}
     }
 
 
-    private void skipNewlines(){
-        while(iter.hasCharacters() && iter.getChar() == '\n'){
-            iter.advance();
-            lineNumber++;
-        }
-    }
 
     private void skipComments(){
         while(iter.hasCharacters() && iter.getChar() != '\n') iter.advance();
     }
 
-    private void skipWhitespace(){
-        while(iter.hasCharacters() && iter.getChar() == ' ') iter.advance();
-    }
 
 
     private boolean match(char c){
@@ -166,8 +159,38 @@ public Lexer(){}
         tokenList.add(new Token(value, TType,lineNumber));
     }
 
-    private void error(String message) throws UnexpectedCharacterException {
-        throw new UnexpectedCharacterException("Line " + String.valueOf(lineNumber) + ": " + message);
+    private void error(String message) throws Exception {
+        throw new Exception("Lexer: Line " + String.valueOf(lineNumber) + ": " + message);
     }
 
+
+    
+    private static final HashMap<String, TType> keywords;
+
+    static {
+        keywords = new HashMap<String, TType>();
+        keywords.put("if",       TType.IF);
+        keywords.put("else",     TType.ELSE);
+        keywords.put("while",    TType.WHILE);
+        keywords.put("for",      TType.FOR);
+        keywords.put("class",    TType.CLASS);
+        keywords.put("def",      TType.DEF);
+        keywords.put("null",     TType.NULL);
+        keywords.put("or",       TType.OR);
+        keywords.put("and",      TType.AND);
+        keywords.put("this",     TType.THIS);
+        keywords.put("super",    TType.SUPER );
+        keywords.put("return",   TType.RETURN);
+        keywords.put("true",     TType.TRUE);
+        keywords.put("false",    TType.FALSE);
+    }
+
+
+    static boolean isKeyword(String word){
+        return keywords.containsKey(word);
+    }
+
+    static TType getKeywordType(String word){
+        return keywords.get(word);
+    }
 }

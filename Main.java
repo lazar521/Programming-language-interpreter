@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.FileNotFoundException;  // Import this class to handle errors
 import java.util.Scanner; // Import the Scanner class to read text files
+import java.util.List;
+import java.util.ListIterator;
 
 import lexer.Lexer;
 import parser.Parser;
@@ -25,15 +27,15 @@ public class Main {
     private static void startInterpreter() throws Exception {
         String text = loadFile(PATH);
         Lexer lexer = new Lexer();
-        Parser parser = new Parser();
+     //   Parser parser = new Parser();
 
-        TokenList list = lexer.makeTokens(text);
-        parser.parseTokens(list);
+        List<Token> tokens = lexer.makeTokens(text);
+      //  parser.parseTokens(list);
 
-        TokenListIterator iter = list.getIterator();
-        while(iter.hasTokens()){
-            System.out.println(iter.getCurrent());
-            iter.advance();
+        ListIterator<Token> iter = tokens.listIterator();
+
+        while(iter.hasNext()){
+            System.out.println(iter.next());
         }
 
     }

@@ -25,6 +25,6 @@ class CharacterIterator {
 
     char getPrevChar() throws Exception {
         if(pos>0) return text.charAt(pos-1);
-        else throw new UnexpectedCharacterException("Peeking back at nonexisting character");
+        else throw new Exception("CharacterIterator: Peeking back at nonexisting character");
     }
 }
