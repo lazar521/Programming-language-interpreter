@@ -1,0 +1,28 @@
+This document only shows what parser considers 'right' syntax. It only helps to keep track of how the parser works.
+Keep in mind that not every production accepted by the parser will also be accepted by the semantic checker
+
+
+// STATEMENTS
+stmt -> exprStmt | declStmt | whileStmt | forStmt | ifStmt | retStmt 
+exprStmt -> expression ';'
+declStmt -> ( 'var' varDecl ';' | 'fn' funcDecl  ) 
+whileStmt -> 'while' '(' expression ')' '{' stmt* '}'
+forStmt -> for '(' varDecl? ';' expression? ';' expression? ')'
+retStmt -> 'return' expression ';'
+
+
+// DECLARATIONS
+varDecl -> (identifier | typeSpecifier) identifier ( '=' expression )? 
+funcDecl -> (identifier | typeSpecifier) identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
+param -> (typeSpecifier | identifier) identifier 
+
+
+// EXPRESSIONS
+expression -> equality
+equality -> comparison ( equality_operator comparison )*
+addition -> multiplication ( addition_operator multiplication )*
+multiplication -> term ( multiplication_operator term)*
+term -> unary_operator? primary
+primary-> function_call | identifier | literal
+literal -> NUM_LITERAL | STRING_LITERAL
+

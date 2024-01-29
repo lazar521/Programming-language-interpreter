@@ -25,16 +25,16 @@ class TokenIterator{
         // which we don't want to in the constructor, so we call iter.previous()
         prev = null;
         curr = iter.next();         
-        iter.previous();            
     }
 
+
     public boolean hasTokens(){
-        return iter.hasNext();
+        return (curr.getType() != TType.END_OF_LIST);
     }
 
 
     public void advance(){
-        if(iter.hasNext()){
+        if(!hasTokens()){
             System.out.println("\n\n ERROR: Iterator cannot advance anymore");
             System.exit(-1);
         }
@@ -42,11 +42,13 @@ class TokenIterator{
         curr = iter.next();
     }
 
-    public Token currToken(){
+    public Token getToken(){
         return curr;
     }
 
-    public Token prevToken(){
+    public Token getPrevToken(){
         return prev;
     }
+
+
 }

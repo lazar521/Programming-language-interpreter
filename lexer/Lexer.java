@@ -19,6 +19,7 @@ public Lexer(){}
 
         tokenzieText();
 
+        addToken(TType.END_OF_LIST);
         return tokenList;
     }
 

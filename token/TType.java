@@ -48,5 +48,7 @@ public enum TType {
     // type specifiers
     TYPE_VOID,
     TYPE_STR,
-    TYPE_INT
+    TYPE_INT,
+
+    END_OF_LIST
 }
