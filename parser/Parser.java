@@ -1,11 +1,13 @@
 package parser;
 
 import token.*;
+import java.util.List;
 
 public class Parser {
-    private TokenListIterator iter;
+    private TokenIterator iter;
 
-    public void parseTokens(TokenList tokens){
-        this.iter = new TokenListIterator(tokens);
+
+    public void parseProgram(List<Token> tokens){
+        this.iter = new TokenIterator(tokens);
     }
 }

@@ -183,6 +183,10 @@ public Lexer(){}
         keywords.put("return",   TType.RETURN);
         keywords.put("true",     TType.TRUE);
         keywords.put("false",    TType.FALSE);
+        keywords.put("void",     TType.TYPE_VOID);
+        keywords.put("int",      TType.TYPE_INT);
+        keywords.put("string",   TType.TYPE_STR);
+        
     }
 
 

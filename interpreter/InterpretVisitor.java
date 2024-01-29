@@ -1,11 +1,11 @@
 package interpreter;
 
-import parser.Expr;
+import ast.Expr;
 import token.*;
 
-public interface InterpretVisitor {
-    public Token executeExprBinary(Expr.Binary expr) ;
-    public Token executeExprUnary(Expr.Unary expr) ;
-    public Token executeExprLiteral(Expr.Literal expr) ;
-    public Token executeExprEnclosed(Expr.Enclosed expr) ;
+public interface InterpretVisitor <T> {
+    public T executeExprBinary(Expr.Binary expr) ;
+    public T executeExprUnary(Expr.Unary expr) ;
+    public T executeExprLiteral(Expr.Literal expr) ;
+    public T executeExprEnclosed(Expr.Enclosed expr) ;
 } 

@@ -2,6 +2,8 @@ package token;
 
 // token types
 public enum TType {
+
+    // basic symbols
     RIGHT_PAREN,
     LEFT_PAREN,
     RIGHT_BRACE,
@@ -27,6 +29,7 @@ public enum TType {
     NUM_LITERAL,
     STRING_LITERAL,
 
+    // keywords
     IF,
     ELSE,
     WHILE,
@@ -40,5 +43,10 @@ public enum TType {
     SUPER,
     RETURN,
     TRUE,
-    FALSE
+    FALSE,
+
+    // type specifiers
+    TYPE_VOID,
+    TYPE_STR,
+    TYPE_INT
 }

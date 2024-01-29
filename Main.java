@@ -21,11 +21,9 @@ public class Main {
     }
 
 
-    private static final String PATH = System.getProperty("user.dir") + "/test2.txt";
-
 
     private static void startInterpreter() throws Exception {
-        String text = loadFile(PATH);
+        String text = loadFile(System.getProperty("user.dir") + "/test2.txt");
         Lexer lexer = new Lexer();
      //   Parser parser = new Parser();
 
