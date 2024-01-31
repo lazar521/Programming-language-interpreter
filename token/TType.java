@@ -35,7 +35,7 @@ public enum TType {
     WHILE,
     FOR,
     CLASS,
-    DEF,
+    fn,
     NULL,
     OR,
     AND,
@@ -44,11 +44,14 @@ public enum TType {
     RETURN,
     TRUE,
     FALSE,
+    VAR,
+    FN,
+
 
     // type specifiers
     TYPE_VOID,
     TYPE_STR,
     TYPE_INT,
 
-    END_OF_LIST
+    EOF
 }

@@ -1,4 +1,2 @@
 -Make separate modules for semantic checking (type checking and stuff)
--Test parser
--Maybe decompose parser into multiple parser submodules
--Probably gonna need multiple interpreters for strings and integers
+-When parser encounters an error and it starts skipping tokens it can skip a '{' ,for example, and then cannot match '}' later

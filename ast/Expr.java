@@ -1,13 +1,10 @@
 package ast;
 
 import token.*;
-import interpreter.InterpretVisitor;
+import interpreter.NodeExecutionVisitor;;
 
 
-public abstract class Expr{
-
-    public abstract <T> T execute(InterpretVisitor<T> visitor);
-
+public abstract class Expr implements ASTNode{
 
     public static class Binary extends Expr{
         public Expr left;
@@ -21,7 +18,7 @@ public abstract class Expr{
         }
 
         @Override
-        public <T> T execute(InterpretVisitor<T> visitor) {
+        public <T> T execute(NodeExecutionVisitor<T> visitor) {
             return visitor.executeExprBinary(this);
         }
     
@@ -39,7 +36,7 @@ public abstract class Expr{
         }
 
         @Override
-        public <T> T execute(InterpretVisitor<T> visitor) {
+        public <T> T execute(NodeExecutionVisitor<T> visitor) {
             return visitor.executeExprUnary(this);
         }
     }
@@ -54,7 +51,7 @@ public abstract class Expr{
         }
 
         @Override
-        public <T> T execute(InterpretVisitor<T> visitor) {
+        public <T> T execute(NodeExecutionVisitor<T> visitor) {
             return visitor.executeExprLiteral(this);
         }
     }
@@ -69,7 +66,7 @@ public abstract class Expr{
         }
 
         @Override
-        public <T> T execute(InterpretVisitor<T> visitor) {
+        public <T> T execute(NodeExecutionVisitor<T> visitor) {
             return visitor.executeExprEnclosed(this);
         }
     }

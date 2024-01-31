@@ -2,13 +2,14 @@ import java.io.File;
 import java.io.FileNotFoundException;  // Import this class to handle errors
 import java.util.Scanner; // Import the Scanner class to read text files
 import java.util.List;
-import java.util.ListIterator;
+
 
 import lexer.Lexer;
 import parser.Parser;
 import token.*;
-import ast.Expr;
+import ast.Stmt;
 import interpreter.astPrinter;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -25,25 +26,28 @@ public class Main {
 
 
     private static void startInterpreter() throws Exception {
-        //String text = loadFile(System.getProperty("user.dir") + "/test2.txt");
+        String text = loadFile(System.getProperty("user.dir") + "/test.txt");
         
-        String text = "1+2/3*((9-8)+(3-2*4)*5)";
         Lexer lexer = new Lexer();
 
         List<Token> tokens = lexer.makeTokens(text);
 
         Parser parser = new Parser();
         parser.setToken(tokens);
-        Expr expr = parser.parseExpr();
+
+        List<Stmt> stmts = parser.parseProgram();
+        if(stmts == null) return;
 
         astPrinter ap = new astPrinter();
-        expr.execute(ap);
-
-        System.out.println("\n\n");
-        ListIterator<Token> iter = tokens.listIterator();
-        while(iter.hasNext()){
-            System.out.println(iter.next());
+        for(Stmt s: stmts){
+            s.execute(ap);
         }
+
+        // System.out.println("\n\n");
+        // ListIterator<Token> iter = tokens.listIterator();
+        // while(iter.hasNext()){
+        //     System.out.println(iter.next());
+        // }
 
     }
 

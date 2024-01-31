@@ -29,7 +29,7 @@ class TokenIterator{
 
 
     public boolean hasTokens(){
-        return (curr.getType() != TType.END_OF_LIST);
+        return (curr.getType() != TType.EOF);
     }
 
 
@@ -50,5 +50,10 @@ class TokenIterator{
         return prev;
     }
 
+    public Token getNextToken(){
+        Token t = iter.next();
+        iter.previous();
+        return t;
+    }
 
 }

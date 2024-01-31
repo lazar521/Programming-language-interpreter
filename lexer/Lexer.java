@@ -19,7 +19,7 @@ public Lexer(){}
 
         tokenzieText();
 
-        addToken(TType.END_OF_LIST);
+        addToken(TType.EOF);
         return tokenList;
     }
 
@@ -175,7 +175,7 @@ public Lexer(){}
         keywords.put("while",    TType.WHILE);
         keywords.put("for",      TType.FOR);
         keywords.put("class",    TType.CLASS);
-        keywords.put("def",      TType.DEF);
+        keywords.put("fn",      TType.FN);
         keywords.put("null",     TType.NULL);
         keywords.put("or",       TType.OR);
         keywords.put("and",      TType.AND);
@@ -187,6 +187,7 @@ public Lexer(){}
         keywords.put("void",     TType.TYPE_VOID);
         keywords.put("int",      TType.TYPE_INT);
         keywords.put("string",   TType.TYPE_STR);
+        keywords.put("var",      TType.VAR);
         
     }
 
