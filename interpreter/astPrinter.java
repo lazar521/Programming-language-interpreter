@@ -1,11 +1,12 @@
 package interpreter;
 
 import ast.*;
+import ast.Expr.Call;
 
 
-public class astPrinter implements NodeExecutionVisitor<Void>{
+public class astPrinter implements ASTVisitor<Void>{
     private static int indent = 0;
-    private static boolean printExpressions = false;
+    private static boolean printExpressions = true;
     
     
     private static String makeIndent(){
@@ -25,30 +26,30 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
 
     //==================== EXPRESSIONS ========================
     @Override
-    public Void executeExprBinary(Expr.Binary expr) {
+    public Void visitBinaryExpr(Expr.Binary expr) {
         if(!printExpressions) return null;
 
         print("binary "+expr.operation.getType());
         indent++;
-        expr.left.execute(this);
-        expr.right.execute(this);
+        expr.left.accept(this);
+        expr.right.accept(this);
         indent--;
         return null;
     }
 
     @Override
-    public Void executeExprUnary(Expr.Unary expr) {
+    public Void visitUnaryExpr(Expr.Unary expr) {
         if(!printExpressions) return null;
 
         print("unary "+expr.operation.getType());
         indent++;
-        expr.expr.execute(this);
+        expr.expr.accept(this);
         indent--;
         return null;
     }
 
     @Override
-    public Void executeExprLiteral(Expr.Literal expr) {
+    public Void visitLiteralExpr(Expr.Literal expr) {
         if(!printExpressions) return null;
 
         print("literal "+expr.value.getValue());
@@ -56,16 +57,30 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
     }
 
     @Override
-    public Void executeExprEnclosed(Expr.Enclosed expr) {
+    public Void visitEnclosedExpr(Expr.Enclosed expr) {
         if(!printExpressions) return null;
 
         print("ENCLOSING");
         indent++;
-        expr.expr.execute(this);
+        expr.expr.accept(this);
         indent--;
         return null;
     }
 
+    @Override
+    public Void visitCallExpr(Call expr) {
+        if(!printExpressions) return null;
+
+        print("Function call");
+        indent++;
+        
+        for(Expr e:expr.arguments){
+            e.accept(this);
+        }
+
+        indent--;
+        return null;
+    }
 
 
 
@@ -73,28 +88,28 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
     //================== STATEMENTS ===================
 
     @Override
-    public Void executeExprStmt(Stmt.ExprStmt stmt) {
+    public Void visitExprStmt(Stmt.ExprStmt stmt) {
         print("ExprStmt");
         indent++;
-        stmt.expr.execute(this);
+        stmt.expr.accept(this);
         indent--;
         return null;
     }
 
     @Override
-    public Void executeDeclStmt(Stmt.DeclStmt stmt) {
-        stmt.decl.execute(this);
+    public Void visitDeclStmt(Stmt.DeclStmt stmt) {
+        stmt.decl.accept(this);
         return null;
     }
 
     @Override
-    public Void executeWhileStmt(Stmt.While stmt) {
+    public Void visitWhileStmt(Stmt.While stmt) {
         print("whileStmt");
         indent++;
-        stmt.condition.execute(this);
+        stmt.condition.accept(this);
         
         for(Stmt s:stmt.statemets){
-            s.execute(this);
+            s.accept(this);
         }
 
         indent--;
@@ -102,16 +117,16 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
     }
 
     @Override
-    public Void executeForStmt(Stmt.For stmt) {
+    public Void visitForStmt(Stmt.For stmt) {
         print("forStmt");
         indent++;
 
-        if(stmt.varDeclaration != null) stmt.varDeclaration.execute(this);
-        if(stmt.condition != null) stmt.condition.execute(this);
-        if(stmt.update != null) stmt.update.execute(this);
+        if(stmt.varDeclaration != null) stmt.varDeclaration.accept(this);
+        if(stmt.condition != null) stmt.condition.accept(this);
+        if(stmt.update != null) stmt.update.accept(this);
     
         for(Stmt s:stmt.statements){
-            s.execute(this);
+            s.accept(this);
         }
 
         indent--;
@@ -119,13 +134,13 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
     }
 
     @Override
-    public Void executeIfStmt(Stmt.If stmt) {
+    public Void visitIfStmt(Stmt.If stmt) {
         print("ifStmt");
         indent++;
-        stmt.condition.execute(this);
+        stmt.condition.accept(this);
 
         for(Stmt s: stmt.statements){
-            s.execute(this);
+            s.accept(this);
         }
         
         indent--;
@@ -133,10 +148,10 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
     }
 
     @Override
-    public Void executeRetStmt(Stmt.Ret stmt) {
+    public Void visitRetStmt(Stmt.Ret stmt) {
         print("returnStmt");
         indent++;
-        stmt.expr.execute(this);
+        stmt.expr.accept(this);
         indent--;
         return null;
     }
@@ -147,21 +162,21 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
     //===================== DECLARATIONS ====================
     
     @Override
-    public Void executeVarDecl(Decl.Var decl) {
+    public Void visitVarDecl(Decl.Var decl) {
         print("varDecl");
         indent++;
-        if(decl.expr != null) decl.expr.execute(this);
+        if(decl.expr != null) decl.expr.accept(this);
         indent--;
         return null;
     }
 
     @Override
-    public Void executeFuncDecl(Decl.Func decl) {
+    public Void visitFuncDecl(Decl.Func decl) {
         print("funcDecl");
         indent++;
 
         for(Stmt s:decl.statements){
-            s.execute(this);
+            s.accept(this);
         }
 
         indent--;
@@ -169,8 +184,10 @@ public class astPrinter implements NodeExecutionVisitor<Void>{
     }
 
     @Override
-    public Void executeParamDecl(Decl.Param decl) {
+    public Void visitParamDecl(Decl.Param decl) {
         print("paramDecl");
         return null;
     }
+
+
 }

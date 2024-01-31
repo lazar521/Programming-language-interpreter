@@ -1,8 +1,8 @@
 package ast;
 
 import token.*;
-import interpreter.NodeExecutionVisitor;;
 
+import java.util.List;
 
 public abstract class Expr implements ASTNode{
 
@@ -18,8 +18,8 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeExprBinary(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitBinaryExpr(this);
         }
     
     }
@@ -36,8 +36,8 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeExprUnary(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitUnaryExpr(this);
         }
     }
 
@@ -51,11 +51,28 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeExprLiteral(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitLiteralExpr(this);
         }
     }
 
+
+    public static class Call extends Expr{
+        public Token identifier;
+        public List<Expr> arguments;
+
+
+        public Call(Token ident,List<Expr> args){
+            this.identifier = ident;
+            this.arguments = args;
+        }
+
+        @Override
+        public <T> T accept(ASTVisitor<T> visitor){
+            return visitor.visitCallExpr(this);
+        }
+
+    }
 
 
     public static class Enclosed extends Expr{
@@ -66,10 +83,11 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeExprEnclosed(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitEnclosedExpr(this);
         }
     }
+
 
 
 }

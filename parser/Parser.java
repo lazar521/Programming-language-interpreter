@@ -323,15 +323,38 @@ public class Parser {
 
     
     private Expr parsePrimary(){
-        if(match(TType.IDENTIFIER,TType.NUM_LITERAL,TType.STRING_LITERAL,TType.TRUE,TType.FALSE,TType.NULL)){
+        // Literal value
+        if(match(TType.NUM_LITERAL,TType.STRING_LITERAL,TType.TRUE,TType.FALSE,TType.NULL)){
             return new Expr.Literal(iter.getPrevToken());
         }
 
-        forceMatch(TType.LEFT_PAREN);
-        Expr expr = parseExpr();
-        forceMatch(TType.RIGHT_PAREN);
+        // Enclosed expression
+        if(match(TType.LEFT_PAREN)){
+            Expr expr = parseExpr();
+            forceMatch(TType.RIGHT_PAREN);
+            return expr;
+        }
 
-        return expr;
+        forceMatch(TType.IDENTIFIER);
+        Token identifier = iter.getPrevToken();
+        
+        // Identifier
+        if( !match(TType.LEFT_PAREN) ){
+            return new Expr.Literal(identifier);
+        }
+
+        // Function call
+        ArrayList<Expr> args = new ArrayList<Expr>();
+        if( !match(TType.RIGHT_PAREN) ){
+            args.add(parseExpr());
+            
+            while( !match(TType.RIGHT_PAREN) ){
+                forceMatch(TType.COMMA);
+                args.add(parseExpr());
+            }
+        }
+
+        return new Expr.Call(identifier, args);
     }
     
 
@@ -353,6 +376,7 @@ public class Parser {
     }
 
 
+    // Reports and throws an error if we cannot match, so that we can handle the unexpected token properly
     private void forceMatch(TType ... types){
         if(!match(types)){
             errorOccured = true;
@@ -362,27 +386,10 @@ public class Parser {
     }
 
 
-    // Synchronization is a type of error recovery when encountering a token that cannot match a rule
-    // We could, in theory, ignore just this one token and continue parsing
-    // The problem is which rule should we continue parsing at? And even worse which part of the rule?  
-    
-    // Let's say we just omit this one token and continue parsing where we left off 
-    // What if we immediately encouter even more unexpected tokens?
-    // Keep in mind that there is an infinite number of combinations in which these tokens could appear  
-    // Also, even one badly placed token can cause a cascade of error detections after it that aren't even real errors
-    // Suddenly, we don't know what's going on anymore and if we're even matching the right rule
-    
-    // We could report just this one error and quit parsing entirely
-    // A better way to handle this would be to try to detect as many of these errors as possible in one passing
-    // A possible solution to this problem would be that we limit the scopes in which these unexpected tokens
-    // can cause cascade of fake errors
-    
-    // For example, if we're matching some statement rule and we encounter an error, we can just
-    // report that error and omit that particular statement altogether and continue parsing the next statement
-    
-    // The way we accomplish this is by throwing away all the tokens until we find one that occurs at the start of some statement rule
-    // That way we can skip the tokens that would be considered part of the bad previous statement and continue parsing the next one
-
+    // If we get a syntax error, we stop parsing that particular statement altogether and continue  
+    // parsing the next one. We achieve this by skipping tokens until we reach one that matches the
+    // start of some statement rule. That way we can report more than one parsing errors and also avoid
+    // detecting cascade of false error detections caused by a bad token in a statement.
     private void synchronize(){
         iter.advance();
 

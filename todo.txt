@@ -1,2 +1,6 @@
 -Make separate modules for semantic checking (type checking and stuff)
 -When parser encounters an error and it starts skipping tokens it can skip a '{' ,for example, and then cannot match '}' later
+-Probably should add an Expr node just for identifiers so that I can execute them by looking at the symbol table and fetching the value;
+-Add assign operation into interpreter
+-Maybe make separate visitor for Expr, Stmt and Decl statements
+-Implement scopes

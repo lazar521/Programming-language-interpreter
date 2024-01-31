@@ -1,12 +1,13 @@
 
 
 fn void print(object a,object b){
-    var int a = 23 - 2/;
+    var int a = 23 - 2;
 
+    func(1,4+2,fun2()/3);
     while(a+2){
 
-        if(b++3){
-            a = 3+3/;
+        if(b+3){
+            a = 3+3;
 
             for(;a+2;(2-4)){
                 

@@ -3,8 +3,6 @@ package ast;
 import token.*;
 import java.util.ArrayList;
 
-import interpreter.NodeExecutionVisitor;
-
 
 public abstract class Decl  implements ASTNode {  
  
@@ -21,8 +19,8 @@ public abstract class Decl  implements ASTNode {
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeVarDecl(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitVarDecl(this);
         }
     }
 
@@ -41,8 +39,8 @@ public abstract class Decl  implements ASTNode {
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeFuncDecl(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitFuncDecl(this);
         }
     }
 
@@ -56,8 +54,8 @@ public abstract class Decl  implements ASTNode {
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeParamDecl(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitParamDecl(this);
         }
     }
 

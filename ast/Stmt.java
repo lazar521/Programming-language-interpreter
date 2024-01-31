@@ -2,7 +2,6 @@ package ast;
 
 import java.util.ArrayList;
 
-import interpreter.NodeExecutionVisitor;
 import token.*;
 
 
@@ -19,8 +18,8 @@ public abstract class Stmt implements ASTNode{
         }
 
                 @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeExprStmt(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitExprStmt(this);
         }
     }
 
@@ -33,8 +32,8 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeDeclStmt(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitDeclStmt(this);
         }
     }
 
@@ -49,8 +48,8 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeWhileStmt(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitWhileStmt(this);
         }
     }
 
@@ -69,8 +68,8 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeForStmt(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitForStmt(this);
         }
     }
 
@@ -85,8 +84,8 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeIfStmt(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitIfStmt(this);
         }
     }
 
@@ -100,8 +99,8 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T execute(NodeExecutionVisitor<T> visitor) {
-            return visitor.executeRetStmt(this);
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitRetStmt(this);
         }
     }
 

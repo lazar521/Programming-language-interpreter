@@ -29,6 +29,9 @@ equality -> comparison ( equality_operator comparison )*
 addition -> multiplication ( addition_operator multiplication )*
 multiplication -> term ( multiplication_operator term )*
 term -> unary_operator? primary
-primary-> function_call | identifier | literal
+primary- > identifier
+         | literal |
+         | '(' equality ')'
+         | identifier '(' identifier (',' identifier)* ')'
 literal -> NUM_LITERAL | STRING_LITERAL
 

@@ -40,7 +40,7 @@ public class Main {
 
         astPrinter ap = new astPrinter();
         for(Stmt s: stmts){
-            s.execute(ap);
+            s.accept(ap);
         }
 
         // System.out.println("\n\n");
