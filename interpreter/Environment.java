@@ -1,18 +1,16 @@
 package interpreter;
 
 
-import java.util.Enumeration;
 import java.util.HashMap;
 
 import ast.Decl;
-import ast.Stmt;
-import ast.DataType;
+import ast.ASTEnums.*;
 
 public abstract class Environment{ 
 
 
     public static class FunctionsTable extends Environment{
-        private HashMap<String,Function> functions;
+        private HashMap<String,Decl.Func> functions;
 
         public FunctionsTable(){
             this.functions = new HashMap<>();
@@ -23,36 +21,16 @@ public abstract class Environment{
                 System.out.println("FunctionTable::add: Adding function "+name+" to function table twice!");
                 System.exit(0);
             }
-            // In interpreter package we try not to look at TType enum since now we're operating 
-            // with AST nodes, which are on a higher level of abstraction. So here we just extract
-            // the DataType from TType and only use DataType enum from now on
-            DataType type = DataType.UNDEFINED;
-            switch (fnNode.type.getType()) {
-                case TYPE_INT:
-                    type = DataType.INT;
-                    break;
-                case TYPE_STR:
-                    type = DataType.STRING;
-                case TYPE_VOID:
-                    type = DataType.VOID;
-                default:
-                    System.out.println("FunctionTable::add: DataType " + fnNode.type + " is not allowed for a funciton");
-                    break;
-            }
 
-            functions.put(name,new Function(fnNode,type));
+            functions.put(name,fnNode);
         }
 
         public Decl.Func getFunc(String name){
-            return functions.get(name).funcNode;
+            return functions.get(name);
         }
 
         public boolean isDeclared(String name){
             return functions.containsKey(name);
-        }
-
-        public DataType getFuncReturnType(String name){
-            return functions.get(name).returnType;
         }
     }
 
@@ -74,21 +52,48 @@ public abstract class Environment{
             variables.put(name, new Variable(type));
         }
 
-
-        public void set(String name,Object value){
-            if(!variables.containsKey(name)){
-                System.out.println("GlobalsTable::set: Modifying an uninitialized variable");
-                System.exit(0);
-            }
-
-            Variable var = variables.get(name);
-
+        // We overload set() function for 2 types of data
+        // For String type 
+        public void setString(String name,String value){
+            Variable var = getVariable(name, DataType.STRING);
             var.initalized = true;
             var.value = value;
         }
 
+        // For int type 
+        public void setInt(String name,int value){
+            Variable var = getVariable(name, DataType.INT);
+            var.initalized = true;
+            var.value = value;
+        }
+
+        public String getString(String name){
+            return (String) getVariable(name, DataType.STRING).value;
+        }
+
+        public int getInt(String name){
+            return (int) getVariable(name, DataType.INT).value;
+        }
+
         public boolean isInitialized(String name){
+            return variables.get(name).initalized;
+        }
+
+        public boolean isDeclared(String name){
             return variables.containsKey(name);
+        }
+
+        private Variable getVariable(String name,DataType type){
+            if(!variables.containsKey(name)){
+                System.out.println("GlobalsTable: Fetching an uninitialized variable");
+                System.exit(0);
+            }
+            Variable var = variables.get(name);
+            if(var.type != DataType.STRING){
+                System.out.println("GlobalsTable: Fetching variable of invalid data type");
+                System.exit(0);
+            }
+            return var;
         }
     }
 
@@ -116,18 +121,5 @@ public abstract class Environment{
         }
     }
 
-
-
-
-
-    private static class Function{
-        public DataType returnType;
-        public Decl.Func funcNode;
-
-        public Function(Decl.Func func, DataType type){
-            this.returnType = type;
-            this.funcNode = func;
-        }
-    }
 
 }

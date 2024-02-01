@@ -3,9 +3,18 @@ package interpreter;
 import ast.ASTVisitor;
 import ast.Decl.*;
 import ast.Expr.*;
+import ast.Program;
 import ast.Stmt.*;
+import ast.ASTEnums.*;
 
-public class Interpreter implements ASTVisitor<Object>{
+public class Executor implements ASTVisitor<Object>{
+    
+    @Override
+    public Object visitProgram(Program prog) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitProgram'");
+    }
+
 
     @Override
     public Object visitExprStmt(ExprStmt stmt) {
@@ -68,10 +77,10 @@ public class Interpreter implements ASTVisitor<Object>{
         Object left = expr.left.accept(this);
         Object right = expr.right.accept(this);
 
-        switch(expr.operation.getType()){
-            case STAR:
+        switch(expr.operation){
+            case MULTIPLY:
                 return (int)left * (int)right;
-            case SLASH:
+            case DIVIDE:
                 return (int)left / (int)right;
             case MINUS:
                 return (int)left - (int)right;
@@ -91,10 +100,10 @@ public class Interpreter implements ASTVisitor<Object>{
 
         Object operand = expr.accept(this);
 
-        switch(expr.operation.getType()){
+        switch(expr.operation){
             case MINUS:
                 return -(int)operand;
-            case BANG:
+            case NOT:
                 return !(boolean)operand;
             default:
                 System.out.println("An invalid operation in Interpreter::visitUnaryExpr");
@@ -108,15 +117,15 @@ public class Interpreter implements ASTVisitor<Object>{
     public Object visitLiteralExpr(Literal expr) {
         // Todo: Add type checking
 
-        String value = expr.value.getValue(); 
+        String value = expr.value; 
 
-        switch(expr.value.getType()){
-            case NUM_LITERAL:
+        switch(expr.type){
+            case INT:
                 return Integer.parseInt(value);
-            case STRING_LITERAL:
+            case STRING:
                 return value;
             default:
-                System.out.println("An invalid operation in Interpreter::visitLiteralExpr");
+                System.out.println("An invalid type in Interpreter::visitLiteralExpr");
                 System.exit(0);
         }
 
@@ -139,5 +148,7 @@ public class Interpreter implements ASTVisitor<Object>{
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitVariableExpr'");
     }
+
+
     
 }

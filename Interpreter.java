@@ -7,15 +7,36 @@ import java.util.List;
 import lexer.Lexer;
 import parser.Parser;
 import token.*;
-import ast.Stmt;
-import interpreter.Interpreter;
-import interpreter.astPrinter;
+import ast.Program;
+import interpreter.Executor;
+import interpreter.SemanticChecker;
+import interpreter.AstPrinter;
 
 
-public class Main {
+public class Interpreter {
+    
+    private AstPrinter treePrinter;
+    private Executor codeExecutor;
+    private SemanticChecker semanticChecker;
+    private Program program;
+    private Lexer lexer;
+    private Parser parser;
+
+
+    public Interpreter(){
+        treePrinter = new AstPrinter();
+        codeExecutor = new Executor();
+        semanticChecker = new SemanticChecker();
+        lexer = new Lexer();
+        parser = new Parser();
+    }
+
+
+
     public static void main(String[] args) {
+        Interpreter interpreter = new Interpreter();
         try {
-            startInterpreter();
+            interpreter.start();
         } catch (Exception e) {
             System.out.println("\nAN ERROR HAS OCCURRED\n");
             System.out.println(e.getMessage());
@@ -26,36 +47,14 @@ public class Main {
 
 
 
-    private static void startInterpreter() throws Exception {
+    private void start() throws Exception {
         String text = loadFile(System.getProperty("user.dir") + "/test.txt");
         
-        Lexer lexer = new Lexer();
-
         List<Token> tokens = lexer.makeTokens(text);
+        Program program = parser.parseProgram(tokens);
+        if(program == null) return;
 
-        Parser parser = new Parser();
-        parser.setToken(tokens);
-
-        List<Stmt> stmts = parser.parseProgram();
-        if(stmts == null) return;
-
-        astPrinter ap = new astPrinter();
-        for(Stmt s: stmts){
-            s.accept(ap);
-        }
-
-        Interpreter interpreter = new Interpreter();
-
-        for(Stmt s:stmts){
-            System.out.println("RESULT IS " + Integer.toString((int)s.accept(interpreter)));
-        }
-
-        // System.out.println("\n\n");
-        // ListIterator<Token> iter = tokens.listIterator();
-        // while(iter.hasNext()){
-        //     System.out.println(iter.next());
-        // }
-
+        program.accept(treePrinter);
     }
 
 
@@ -71,4 +70,7 @@ public class Main {
 
         return fileContent.toString();
     }
+
+
+    
 }

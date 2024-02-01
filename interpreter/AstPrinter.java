@@ -5,7 +5,7 @@ import ast.Expr.Call;
 import ast.Expr.Variable;
 
 
-public class astPrinter implements ASTVisitor<Void>{
+public class AstPrinter implements ASTVisitor<Void>{
     private static int indent = 0;
     private static boolean printExpressions = true;
     
@@ -25,12 +25,26 @@ public class astPrinter implements ASTVisitor<Void>{
 
 
 
+    @Override
+    public Void visitProgram(Program prog) {
+        print("PROGRAM");
+        indent++;
+        for(Stmt s:prog.statements){
+            s.accept(this);
+        }
+        indent--;
+
+        return null;
+    }
+
+
+
     //==================== EXPRESSIONS ========================
     @Override
     public Void visitBinaryExpr(Expr.Binary expr) {
         if(!printExpressions) return null;
 
-        print("binary "+expr.operation.getType());
+        print("binary "+expr.operation);
         indent++;
         expr.left.accept(this);
         expr.right.accept(this);
@@ -42,7 +56,7 @@ public class astPrinter implements ASTVisitor<Void>{
     public Void visitUnaryExpr(Expr.Unary expr) {
         if(!printExpressions) return null;
 
-        print("unary "+expr.operation.getType());
+        print("unary "+expr.operation);
         indent++;
         expr.expr.accept(this);
         indent--;
@@ -53,7 +67,7 @@ public class astPrinter implements ASTVisitor<Void>{
     public Void visitLiteralExpr(Expr.Literal expr) {
         if(!printExpressions) return null;
 
-        print("literal "+expr.value.getValue());
+        print("literal "+expr.value);
         return null;
     }
 
@@ -194,6 +208,7 @@ public class astPrinter implements ASTVisitor<Void>{
         print("paramDecl");
         return null;
     }
+
 
 
 

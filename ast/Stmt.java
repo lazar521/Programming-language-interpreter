@@ -6,15 +6,15 @@ import token.*;
 
 
 public abstract class Stmt implements ASTNode{
-    
+
 
     public static class ExprStmt extends Stmt{
         public Expr expr;
-        public Token identifier;
+        public String identifier;
 
         public ExprStmt (Token ident,Expr expr){
             this.expr = expr;
-            this.identifier = ident;
+            this.identifier = ident.getValue();
         }
 
                 @Override

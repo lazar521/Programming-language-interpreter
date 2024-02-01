@@ -1,21 +1,25 @@
 package ast;
 
 import token.*;
-
+import ast.ASTEnums.*;
 import java.util.List;
 
 public abstract class Expr implements ASTNode{
+
+    // This is a field that every Expr subtype will have.
+    // Its purpose is to help us perform semantic analysis
+    // We won't be assigning it rightaway, but in SemanticChecker class
     public DataType type = DataType.UNDEFINED;
 
 
     public static class Binary extends Expr{
         public Expr left;
         public Expr right;
-        public Token operation;
+        public Operations operation;
 
         public Binary(Expr left,Token operation,Expr right){
             this.left = left;
-            this.operation = operation;
+            this.operation = ASTEnums.toAstOperation(operation.getType());
             this.right = right;
         }
 
@@ -30,11 +34,11 @@ public abstract class Expr implements ASTNode{
 
     public static class Unary extends Expr{
         public Expr expr;
-        public Token operation;
+        public Operations operation;
 
         public Unary(Token operation,Expr expr){
             this.expr = expr;
-            this.operation = operation;
+            this.operation = ASTEnums.toAstOperation(operation.getType());
         }
 
         @Override
@@ -46,10 +50,11 @@ public abstract class Expr implements ASTNode{
 
 
     public static class Literal extends Expr{
-        public Token value;
+        public String value;
 
-        public Literal(Token value){
-            this.value = value;
+        public Literal(Token literal){
+            this.value = literal.getValue();
+            this.type = ASTEnums.toAstType(literal.getType());
         }
 
         @Override
@@ -60,12 +65,12 @@ public abstract class Expr implements ASTNode{
 
 
     public static class Call extends Expr{
-        public Token identifier;
+        public String identifier;
         public List<Expr> arguments;
 
 
         public Call(Token ident,List<Expr> args){
-            this.identifier = ident;
+            this.identifier = ident.getValue();
             this.arguments = args;
         }
 
@@ -92,10 +97,10 @@ public abstract class Expr implements ASTNode{
 
 
     public static class Variable extends Expr{
-        public Token identifier;
+        public String identifier;
 
         public Variable(Token ident){
-            this.identifier = ident;
+            this.identifier = ident.getValue();
         }
 
         @Override

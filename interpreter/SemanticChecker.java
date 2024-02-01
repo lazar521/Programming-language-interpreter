@@ -8,7 +8,7 @@ import ast.Expr.*;
 
 
 
-class SemanticChecker implements ASTVisitor<Object>{
+public class SemanticChecker implements ASTVisitor<Object>{
     private boolean CHECKING_GLOBALS;
     private Environment.FunctionsTable funcTable;
     private Environment.GlobalsTable globalVariables;
@@ -31,6 +31,15 @@ class SemanticChecker implements ASTVisitor<Object>{
         for(Stmt stmt:statements){
             stmt.accept(this);
         }
+    }
+
+    @Override
+    public Object visitProgram(Program prog) {
+        for(Stmt s: prog.statements){
+            s.accept(this);
+        }
+        
+        return null;
     }
 
     @Override
@@ -73,7 +82,10 @@ class SemanticChecker implements ASTVisitor<Object>{
     public Object visitVarDecl(Var decl) {
         if(CHECKING_GLOBALS){
             // TODO: Catch exceptions when declaring a global variable with an expression that cannot be calculated during semantic analyze
-            
+            globalVariables.add(decl.identifier,decl.type);
+            if(decl.expr != null){
+                // TODO: Assign
+            }
             return null;
         }
 
@@ -131,4 +143,6 @@ class SemanticChecker implements ASTVisitor<Object>{
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitVariableExpr'");
     }
+
+
 }

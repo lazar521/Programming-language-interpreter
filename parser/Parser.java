@@ -20,11 +20,10 @@ public class Parser {
     private TokenIterator iter;
     private boolean errorOccured;
 
-    public void setToken(List<Token> tokens){
-        this.iter = new TokenIterator(tokens);
-    }
 
-    public ArrayList<Stmt> parseProgram(){
+    public Program parseProgram(List<Token> tokens){
+        this.iter = new TokenIterator(tokens);
+
         errorOccured = false;
         ArrayList<Stmt> statements = new ArrayList<Stmt>();
        
@@ -43,7 +42,7 @@ public class Parser {
             return null;
         }
 
-        return statements;
+        return new Program(statements);
     }
 
 

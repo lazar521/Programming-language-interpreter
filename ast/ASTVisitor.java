@@ -2,6 +2,7 @@ package ast;
 
 public interface ASTVisitor <T> {
     // Statement nodes
+    public T visitProgram(Program prog);
     public T visitExprStmt(Stmt.ExprStmt stmt);
     public T visitDeclStmt(Stmt.DeclStmt stmt);
     public T visitWhileStmt(Stmt.While stmt);
