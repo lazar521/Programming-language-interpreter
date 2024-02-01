@@ -8,6 +8,7 @@ import lexer.Lexer;
 import parser.Parser;
 import token.*;
 import ast.Stmt;
+import interpreter.Interpreter;
 import interpreter.astPrinter;
 
 
@@ -20,7 +21,7 @@ public class Main {
             System.out.println(e.getMessage());
         }
 
-        System.out.println("\nINTERPRETER STOPPED\n");
+        System.out.println("\nFINISHED SUCCESFULLY\n");
     }
 
 
@@ -41,6 +42,12 @@ public class Main {
         astPrinter ap = new astPrinter();
         for(Stmt s: stmts){
             s.accept(ap);
+        }
+
+        Interpreter interpreter = new Interpreter();
+
+        for(Stmt s:stmts){
+            System.out.println("RESULT IS " + Integer.toString((int)s.accept(interpreter)));
         }
 
         // System.out.println("\n\n");

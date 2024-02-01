@@ -2,6 +2,7 @@ package interpreter;
 
 import ast.*;
 import ast.Expr.Call;
+import ast.Expr.Variable;
 
 
 public class astPrinter implements ASTVisitor<Void>{
@@ -83,6 +84,11 @@ public class astPrinter implements ASTVisitor<Void>{
     }
 
 
+    @Override
+    public Void visitVariableExpr(Variable expr) {
+        print("variable");
+        return null;
+    }
 
 
     //================== STATEMENTS ===================
@@ -188,6 +194,8 @@ public class astPrinter implements ASTVisitor<Void>{
         print("paramDecl");
         return null;
     }
+
+
 
 
 }

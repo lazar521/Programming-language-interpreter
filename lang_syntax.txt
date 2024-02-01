@@ -3,7 +3,7 @@ Keep in mind that not every production accepted by the parser will also be accep
 
 
 // PROGRAM
-program -> stmt+
+program -> declStmt*
 
 
 // STATEMENTS

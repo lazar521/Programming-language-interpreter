@@ -5,6 +5,8 @@ import token.*;
 import java.util.List;
 
 public abstract class Expr implements ASTNode{
+    public DataType type = DataType.UNDEFINED;
+
 
     public static class Binary extends Expr{
         public Expr left;
@@ -89,5 +91,17 @@ public abstract class Expr implements ASTNode{
     }
 
 
+    public static class Variable extends Expr{
+        public Token identifier;
+
+        public Variable(Token ident){
+            this.identifier = ident;
+        }
+
+        @Override
+        public <T> T accept(ASTVisitor<T> visitor) {
+            return visitor.visitVariableExpr(this);
+        }   
+    }
 
 }

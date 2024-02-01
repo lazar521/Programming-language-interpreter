@@ -20,4 +20,5 @@ public interface ASTVisitor <T> {
     public T visitLiteralExpr(Expr.Literal expr) ;
     public T visitEnclosedExpr(Expr.Enclosed expr) ;
     public T visitCallExpr(Expr.Call expr);
+    public T visitVariableExpr(Expr.Variable expr);
 } 

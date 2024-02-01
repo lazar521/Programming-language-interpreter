@@ -29,7 +29,14 @@ public class Parser {
         ArrayList<Stmt> statements = new ArrayList<Stmt>();
        
         while(iter.hasTokens()){
-            statements.add(parseStmt());
+            Token token = iter.getToken();
+            
+            if(token.getType() != TType.FN && token.getType() != TType.VAR){
+                System.out.println("Parser::ParseProgram: Token "+token+" doesn't match any declaration rule");
+                System.exit(0);
+            }
+
+            statements.add(parseDeclStmt());
         }
 
         if(errorOccured){
@@ -340,7 +347,7 @@ public class Parser {
         
         // Identifier
         if( !match(TType.LEFT_PAREN) ){
-            return new Expr.Literal(identifier);
+            return new Expr.Variable(identifier);
         }
 
         // Function call
