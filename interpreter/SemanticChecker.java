@@ -4,22 +4,21 @@ import java.util.List;
 import ast.*;
 import ast.Decl.*;
 import ast.Stmt.*;
+import environment.Environment;
 import ast.Expr.*;
 
 
 
 public class SemanticChecker implements ASTVisitor<Object>{
     private boolean CHECKING_GLOBALS;
-    private Environment.FunctionsTable funcTable;
-    private Environment.GlobalsTable globalVariables;
+
 
     public void checkSemantics(List<Stmt> statements){
-        CHECKING_GLOBALS = true;
 
-        funcTable = new Environment.FunctionsTable.FunctionsTable();
-        globalVariables = new Environment.GlobalsTable.GlobalsTable();
 
         // first we note all the functions and global variables and return immediately from each declaration statement
+        CHECKING_GLOBALS = true;
+
         for(Stmt stmt:statements){
             stmt.accept(this);
         }
@@ -80,16 +79,8 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
     @Override
     public Object visitVarDecl(Var decl) {
-        if(CHECKING_GLOBALS){
-            // TODO: Catch exceptions when declaring a global variable with an expression that cannot be calculated during semantic analyze
-            globalVariables.add(decl.identifier,decl.type);
-            if(decl.expr != null){
-                // TODO: Assign
-            }
-            return null;
-        }
+        throw new UnsupportedOperationException("Unimplemented method 'visitRetStmt'");
 
-        return null;
     }
 
     @Override
