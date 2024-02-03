@@ -1,9 +1,11 @@
-var int a = 3+2;
+var int a = 23;
 
 
 
-fn void fnname(int a,string b){
+fn void fnname(int b,string c){
+    b=2;
+    c=3;
     for(int a=a;b;c){
-        return 23;
+        return x;
     }
 }

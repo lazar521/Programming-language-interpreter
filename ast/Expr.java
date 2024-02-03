@@ -82,6 +82,7 @@ public abstract class Expr implements ASTNode{
     }
 
 
+    // TODO: Enclosed expression type is redundant. We can remove it later
     public static class Enclosed extends Expr{
         public Expr expr;
 

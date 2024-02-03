@@ -185,8 +185,12 @@ public class Parser {
 
     private Stmt parseRetStmt(){
         forceMatch(TType.RETURN);
-        Expr expr = parseExpr();
-        forceMatch(TType.SEMICOLON);
+
+        Expr expr = null;
+        if( !match(TType.SEMICOLON)){
+            expr = parseExpr();
+            forceMatch(TType.SEMICOLON);
+        }
 
         return new Stmt.Ret(expr);
     }
@@ -198,7 +202,7 @@ public class Parser {
     //============= DECLARATIONS ===================
 
     private Decl.Var parseVarDecl(){
-        forceMatch(TType.IDENTIFIER,TType.TYPE_INT,TType.TYPE_STR);
+        forceMatch(TType.TYPE_INT,TType.TYPE_STR);
         Token type = iter.getPrevToken();
 
         forceMatch(TType.IDENTIFIER);
@@ -214,7 +218,7 @@ public class Parser {
 
 
     private Decl parseFuncDecl(){
-        forceMatch(TType.IDENTIFIER,TType.TYPE_INT,TType.TYPE_STR,TType.TYPE_VOID);
+        forceMatch(TType.TYPE_INT,TType.TYPE_STR,TType.TYPE_VOID);
         Token type = iter.getPrevToken();
 
         forceMatch(TType.IDENTIFIER);
@@ -259,6 +263,8 @@ public class Parser {
 
     //============= EXPRESSIONS ===============
 
+
+    // TODO: Add assign expression type. It should produce a binaryExpr node
     public Expr parseExpr(){
         return parseEquality();
     }

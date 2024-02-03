@@ -1,6 +1,9 @@
--Make separate modules for semantic checking (type checking and stuff)
 -When parser encounters an error and it starts skipping tokens it can skip a '{' ,for example, and then cannot match '}' later
--Probably should add an Expr node just for identifiers so that I can execute them by looking at the symbol table and fetching the value;
 -Add assign operation into interpreter
--Maybe make separate visitor for Expr, Stmt and Decl statements
--Implement scopes
+-Check if the parser is well written
+-Move TType to DataType conversions into Parser class
+-Remove some Expr and Stmt AST classes like Enclosed for example
+-Write a better astPrinter
+
+-Maybe i should provide only basic funcitonalities in the DeclarationTable class without throwing an error, and just move over the checking into Environment class
+ but aside from that everything seems to work fine

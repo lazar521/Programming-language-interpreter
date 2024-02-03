@@ -1,18 +1,31 @@
 package interpreter;
 
 import ast.ASTVisitor;
+import ast.Decl;
 import ast.Decl.*;
 import ast.Expr.*;
 import ast.Program;
+import ast.Stmt;
 import ast.Stmt.*;
+import interpreter.environment.Environment;
 import ast.ASTEnums.*;
 
 public class Executor implements ASTVisitor<Object>{
-    
+    private Environment environment;
+
     @Override
     public Object visitProgram(Program prog) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitProgram'");
+        environment = new Environment();
+
+        for(Stmt stmt:prog.statements){
+            stmt.accept(this);
+        }
+
+        environment.fetchVar("main");
+        
+
+
+        return null;
     }
 
 
@@ -133,20 +146,20 @@ public class Executor implements ASTVisitor<Object>{
     }
 
     @Override
-    public Object visitEnclosedExpr(Enclosed expr) {
-        return expr.expr.accept(this);
+    public Object visitEnclosedExpr(Enclosed enclosed) {
+        return enclosed.expr.accept(this);
     }
 
     @Override
-    public Object visitCallExpr(Call expr) {
+    public Object visitCallExpr(Call call) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'executeCallExpr'");
     }
 
     @Override
-    public Object visitVariableExpr(Variable expr) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitVariableExpr'");
+    public Object visitVariableExpr(Variable variable) {
+        variable.type = environment.getVarType(variable.identifier);
+        return environment.fetchVar(variable.identifier);
     }
 
 

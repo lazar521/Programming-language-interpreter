@@ -55,6 +55,7 @@ public class Interpreter {
         if(program == null) return;
 
         program.accept(treePrinter);
+        semanticChecker.checkSemantics(program);
     }
 
 
