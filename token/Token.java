@@ -16,7 +16,7 @@ public class Token {
         return TType;
     }
 
-    public String getValue(){
+    public String getString(){
         return value;
     }
 

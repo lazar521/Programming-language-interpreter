@@ -174,21 +174,11 @@ public Lexer(){}
         keywords.put("else",     TType.ELSE);
         keywords.put("while",    TType.WHILE);
         keywords.put("for",      TType.FOR);
-        keywords.put("class",    TType.CLASS);
         keywords.put("fn",       TType.FN);
-        keywords.put("null",     TType.NULL);
-        keywords.put("or",       TType.OR);
-        keywords.put("and",      TType.AND);
-        keywords.put("this",     TType.THIS);
-        keywords.put("super",    TType.SUPER );
         keywords.put("return",   TType.RETURN);
-        keywords.put("true",     TType.TRUE);
-        keywords.put("false",    TType.FALSE);
         keywords.put("void",     TType.TYPE_VOID);
         keywords.put("int",      TType.TYPE_INT);
-        keywords.put("string",   TType.TYPE_STR);
-        keywords.put("var",      TType.VAR);
-        
+        keywords.put("string",   TType.TYPE_STR);        
     }
 
 

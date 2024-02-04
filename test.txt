@@ -1,11 +1,32 @@
-var int a = 23;
+// This is a test file with sample code for the interptreter to execute
+// First we perform semantic analysis and report all the errors
 
+int A = 23 + 2/4;
 
+fn void func1(int b,string c){
 
-fn void fnname(int b,string c){
-    b=2;
-    c=3;
-    for(int a=a;b;c){
-        return x;
+    c="one" + " two";
+    c= c + "three";     // Ignores comments
+    c = c+2;
+
+    b = A;
+
+    int A;
+    while(b){
+        int inner;
+        inner = 23;
+        
+        return A;
     }
+
+    inner = 2;
+
+    func2( "wrong type" , 3 , 5);
+
 }
+
+fn void func2(int x, string y){
+    someString = "This variable can be seen inside functions even before it's declared because it's a global variable";
+}
+
+string someString = "Declared at the end";

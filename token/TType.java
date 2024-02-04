@@ -44,7 +44,6 @@ public enum TType {
     RETURN,
     TRUE,
     FALSE,
-    VAR,
     FN,
 
 

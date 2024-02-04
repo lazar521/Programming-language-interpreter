@@ -4,19 +4,25 @@ import java.util.HashMap;
 import java.util.Stack;
 import java.util.LinkedList;
 
-import ast.ASTEnums.DataType;
+import ast.ASTEnums;
+
+
+
+// This class only provides basic functionalities and doesn't do any error checking or recovery
+// All of that will be for the user to handle
 
 
 public class DeclarationtTable {
     private HashMap< String, Stack<Variable> > nameTable; 
-    private Stack< LinkedList<String> > cleanupTracker;
-    private String tableName;
     private int nestingLevel;
+ 
+    // Block scopes can be nested inside each other. We use the stack to keep track of those scopes.
+    // Each value in the stack is a list of names declared in that particular scope.
+    private Stack< LinkedList<String> > cleanupTracker;
 
     
-    public DeclarationtTable(String name){
+    public DeclarationtTable(){
         this.nameTable = new HashMap<>();
-        this.tableName = name;
         this.nestingLevel = 0;
 
         this.cleanupTracker = new Stack<>();
@@ -24,86 +30,68 @@ public class DeclarationtTable {
     }
 
 
-    public void declare(String name,DataType type){
+    public void declare(String name,ASTEnums type){
         Stack<Variable> stack;
         
-        if(!nameTable.containsKey(name)){
+        if(nameTable.containsKey(name)){
+            stack = nameTable.get(name);
+        }
+        else{
             stack = new Stack<Variable>();
             nameTable.put(name, stack);
         }
-        else{
-            stack = nameTable.get(name);
-            if(stack.peek().level == nestingLevel){
-                Environment.environmentError(tableName+".declare: declaring a variable twice in the same scope " + name);
-            }
-        }
 
         stack.push(new Variable(type,nestingLevel));
+
+        // We keep track of variables declared in the current block scope so we can remove later when exiting the block
         cleanupTracker.peek().add(name);
     }
 
 
-
+    // Checking if a variable with that name has been declared at all 
     public boolean isDeclared(String name){
         return nameTable.containsKey(name);
     }
 
-
-    public boolean isInitialized(String name){
-        if(!isDeclared(name)){
-            Environment.environmentError(tableName+".isInitialized: accessing an undeclared variale " + name);
-        }
-
-        return nameTable.get(name).peek().initalized;
+    // Checking if a variable with the same name has alredy been declared in the current block scope
+    public boolean isDeclaredInInnerScope(String name){
+        return (nameTable.containsKey(name) && nameTable.get(name).peek().level == nestingLevel);
     }
 
 
+    // Calling isInitialized() on an undeclared variable will cause a runtime error
+    public boolean isInitialized(String name){
+        return nameTable.get(name).peek().initalized;
+    }
+
+    // Calling fetch() on an uninitialized variable will cause a runtime error
     public Object fetch(String name){
-        if(!isDeclared(name)){
-            Environment.environmentError(tableName+".fetch: accessing an undeclared variable " + name);
-        }
-
-        if(!isInitialized(name)){
-            Environment.environmentError(tableName+".fetch: accessing an uninitialized variable " + name);
-        }
-
         return nameTable.get(name).peek().value;
     }
 
 
-    // TODO: Later we can probably remove this type parameter 
-    public void assign(String name,Object value,DataType type){
-        if(!isDeclared(name)){
-            Environment.environmentError(tableName+".assign: assigning to an undeclared variable " + name);
-        }
-
+    // Calling assign() on an undeclared variable will cause a runtime error
+    public void assign(String name,Object value){
         Variable var = nameTable.get(name).peek();
-
-        if(var.type != type){
-            Environment.environmentError(tableName+".assign: Assigning type " + type + " to variable " + name + " of type " + var.type);
-        }
-
         var.initalized = true;
         var.value = value;
     }
 
 
-    public DataType getType(String name){
-        if(isDeclared(name)){
-            return nameTable.get(name).peek().type;
-        }
-
-        Environment.environmentError(tableName+".getType: Accessing an undeclared variable " + name);
-        return DataType.UNDEFINED;
+    // Calling getType() on an undeclared variable will cause a runtime error
+    public ASTEnums getType(String name){
+        return nameTable.get(name).peek().type;
     }
 
 
+    // If we enter new block scope, we can redeclare a variable. That way we shadow the outer variable with the same name
     public void enterBlockScope(){
         nestingLevel++;
         cleanupTracker.push(new LinkedList<>());
     }
 
 
+    // When exiting a block scope we throw away all the variables that were declared in that scope
     public void exitBlockScope(){
         nestingLevel--;
         
@@ -117,18 +105,17 @@ public class DeclarationtTable {
                 nameTable.remove(name);
             }
         }
-
     }
 
 
-
+    // Wrapper class to keep info about variables in the declaration table
     private static class Variable{
         public boolean initalized;
-        public DataType type;
+        public ASTEnums type;
         public Object value;
         public int level;
 
-        public Variable(DataType type,int nestingLevel){
+        public Variable(ASTEnums type,int nestingLevel){
             this.type = type;
             this.initalized = false;
             this.value = null;

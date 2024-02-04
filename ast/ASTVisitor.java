@@ -18,8 +18,8 @@ public interface ASTVisitor <T> {
     // Expression nodes
     public T visitBinaryExpr(Expr.Binary expr) ;
     public T visitUnaryExpr(Expr.Unary expr) ;
+    public T visitAssignExpr(Expr.Assign expr);
     public T visitLiteralExpr(Expr.Literal expr) ;
-    public T visitEnclosedExpr(Expr.Enclosed expr) ;
     public T visitCallExpr(Expr.Call expr);
     public T visitVariableExpr(Expr.Variable expr);
 } 

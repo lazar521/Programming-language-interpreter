@@ -1,9 +1,2 @@
 -When parser encounters an error and it starts skipping tokens it can skip a '{' ,for example, and then cannot match '}' later
--Add assign operation into interpreter
--Check if the parser is well written
--Move TType to DataType conversions into Parser class
--Remove some Expr and Stmt AST classes like Enclosed for example
--Write a better astPrinter
-
--Maybe i should provide only basic funcitonalities in the DeclarationTable class without throwing an error, and just move over the checking into Environment class
- but aside from that everything seems to work fine
+-Write the code executor

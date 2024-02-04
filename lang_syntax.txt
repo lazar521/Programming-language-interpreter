@@ -8,8 +8,8 @@ program -> declStmt*
 
 // STATEMENTS
 stmt -> exprStmt | assignStmt | declStmt | whileStmt | forStmt | ifStmt | retStmt 
-exprStmt -> expression ';'                                                      ===> SHOULD CHANGE THIS  
-declStmt -> ( 'var' varDecl ';' | 'fn' funcDecl  ) 
+exprStmt -> expression ';'                                                      
+declStmt -> ( varDecl ';' | 'fn' funcDecl  )                             
 whileStmt -> 'while' '(' expression ')' '{' stmt* '}'
 forStmt -> for '(' varDecl? ';' expression? ';' expression? ')' '{' stmt* '}'
 ifStmt -> 'if' '(' expr ')' '{' stmt* '}'  
@@ -24,7 +24,7 @@ param -> typeSpecifier identifier
 
 // EXPRESSIONS
 expression -> assignment 
-assignment -> (identifier '=') equality                 ===> SHOULD ADD THIS
+assignment -> (identifier '=') equality                 
 equality -> comparison ( equality_operator comparison )*
 addition -> multiplication ( addition_operator multiplication )*
 multiplication -> term ( multiplication_operator term )*

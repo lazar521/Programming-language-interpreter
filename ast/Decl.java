@@ -1,21 +1,20 @@
 package ast;
 
-import token.*;
 import java.util.ArrayList;
-import ast.ASTEnums.*;
 
 public abstract class Decl  implements ASTNode {  
- 
+    public int lineNumber;
 
     public static class Var extends Decl {
-        public DataType type;
+        public ASTEnums type;
         public String identifier;
         public Expr expr;
 
-        public Var(Token type,Token ident,Expr expr){
-            this.type = ASTEnums.toAstType(type.getType());
-            this.identifier = ident.getValue();
+        public Var(ASTEnums type,String identifier,Expr expr,int lineNumber){
+            this.type = type;
+            this.identifier = identifier;
             this.expr = expr;
+            this.lineNumber = lineNumber;
         }
 
         @Override
@@ -26,16 +25,17 @@ public abstract class Decl  implements ASTNode {
 
 
     public static class Func extends Decl{
-        public DataType type;
-        public String funcName;
+        public ASTEnums type;
+        public String identifier;
         public ArrayList<Param> params;
-        public ArrayList<Stmt> statements;
+        public ArrayList<Stmt> body;
 
-        public Func(Token type,Token ident,ArrayList<Param> parameters,ArrayList<Stmt> stmts){
-            this.type = ASTEnums.toAstType(type.getType());
-            this.funcName = ident.getValue();
+        public Func(ASTEnums type,String identifier,ArrayList<Param> parameters,ArrayList<Stmt> statements,int lineNumber){
+            this.type = type;
+            this.identifier = identifier;
             this.params = parameters;
-            this.statements = stmts;
+            this.body = statements;
+            this.lineNumber = lineNumber;
         }
 
         @Override
@@ -46,12 +46,13 @@ public abstract class Decl  implements ASTNode {
 
 
     public static class Param extends Decl{
-        public DataType type;
+        public ASTEnums type;
         public String identifier;
 
-        public Param(Token type,Token ident){
-            this.type = ASTEnums.toAstType(type.getType());
-            this.identifier = ident.getValue();
+        public Param(ASTEnums type,String identifier,int lineNumber){
+            this.type = type;
+            this.identifier = identifier;
+            this.lineNumber = lineNumber;
         }
 
         @Override

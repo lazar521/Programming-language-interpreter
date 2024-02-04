@@ -18,7 +18,6 @@ public class Interpreter {
     private AstPrinter treePrinter;
     private Executor codeExecutor;
     private SemanticChecker semanticChecker;
-    private Program program;
     private Lexer lexer;
     private Parser parser;
 
@@ -37,12 +36,12 @@ public class Interpreter {
         Interpreter interpreter = new Interpreter();
         try {
             interpreter.start();
+            System.out.println("\nFINISHED SUCCESFULLY\n");
         } catch (Exception e) {
             System.out.println("\nAN ERROR HAS OCCURRED\n");
             System.out.println(e.getMessage());
         }
 
-        System.out.println("\nFINISHED SUCCESFULLY\n");
     }
 
 

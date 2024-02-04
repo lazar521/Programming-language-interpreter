@@ -1,91 +1,90 @@
 package interpreter;
 
-import java.util.List;
 
-import javax.management.relation.RelationSupport;
 
 import ast.*;
-import ast.ASTEnums.DataType;
-import ast.ASTEnums.Operations;
 import ast.Decl.*;
 import ast.Stmt.*;
 import interpreter.environment.Environment;
 import ast.Expr.*;
 
-import java.util.LinkedList;
 
 public class SemanticChecker implements ASTVisitor<Object>{
-    private boolean DECLARING_GLOBAL_FUNCTIONS;
     private boolean ERROR_OCCURED;
     private Environment environment;
-    private LinkedList<Decl.Func> globalFunctions;
 
 
-
-    public void checkSemantics(Program program){
+    public boolean checkSemantics(Program program){
         environment = new Environment();
-        globalFunctions = new LinkedList<>();
         ERROR_OCCURED = false;
-
-        // First we find all global functions and note them in our environment
-        DECLARING_GLOBAL_FUNCTIONS = true;
         program.accept(this);
 
-        // Now we're actually doing the analysis and type checking
-        // Since we've alredy performed type checking for the 
-        DECLARING_GLOBAL_FUNCTIONS = false;
-        program.accept(this);
+        return !ERROR_OCCURED;
     }
 
 
 
     @Override
     public Object visitProgram(Program prog) {
-        for(Stmt s: prog.statements){
-            s.accept(this);
+        for(Stmt stmt:prog.varDeclarations){
+            stmt.accept(this);
+        }
+
+        // First we declare all the functions before checking their semantics
+        // We do this to make all functions visible to the whole program
+        for(Stmt.DeclStmt declarationStatement : prog.funcDeclarations){
+            Decl.Func funcDeclaration = (Decl.Func) declarationStatement.declaration;
+            
+            // We also need to check function parameter semantics 
+            for(Decl.Param param : funcDeclaration.params){
+                param.accept(this);
+            }
+
+            if(environment.isFuncDeclared(funcDeclaration.identifier)){
+                report(funcDeclaration.lineNumber,"Declaring a function with the same name twice " + funcDeclaration.identifier + "'");
+            }
+            else{
+                environment.declareFunction(funcDeclaration.identifier, funcDeclaration, funcDeclaration.type);
+            }
+        }
+
+        // Here we're checking function bodies
+        for(Stmt stmt:prog.funcDeclarations){
+            stmt.accept(this);
         }
         
         return null;
     }
 
 
+
     @Override
     public Object visitExprStmt(ExprStmt exprStmt) {
         exprStmt.expr.accept(this);
-
-        // TODO: this part should go into visitBinary that will handle assignment operation
-        if(exprStmt.identifier != null){
-            if(exprStmt.expr.type != environment.getVarType(exprStmt.identifier)){
-                report("Variable " + exprStmt.identifier +" is of type " + environment.getVarType(exprStmt.identifier) +" type " + exprStmt.expr.type +" was assigned");
-            }
-
-            // This way we just tell the environment that the varible has been initialized here. It doesn't matter which value we pass since we won't be using it
-            // We are only performing semantic checks now.
-            environment.assignVar(exprStmt.identifier, null, environment.getVarType(exprStmt.identifier));
-        }
-
         return null;
     }
+
 
 
     @Override
     public Object visitDeclStmt(DeclStmt declStmt) {
-        declStmt.decl.accept(this);
+        declStmt.declaration.accept(this);
         return null;
     }
+
 
 
     @Override
     public Object visitWhileStmt(While whileStmt) {
         whileStmt.condition.accept(this);
 
-        if(whileStmt.condition.type != DataType.INT){
-            report("While statement condition expects type INT, but got " + whileStmt.condition.type);
+        if(whileStmt.condition.type != ASTEnums.INT){
+            report(whileStmt.lineNumber,"While statement condition expects type INT, but got " + whileStmt.condition.type);
         }
 
         environment.enterCodeBlock();
 
-        for(Stmt stmt: whileStmt.statemets){
+        for(Stmt stmt: whileStmt.body){
             stmt.accept(this);
         }
 
@@ -106,8 +105,8 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
         if(forStmt.condition != null){
             forStmt.condition.accept(this);
-            if(forStmt.condition.type != DataType.INT){
-                report("For statement condition expects type INT, but got " + forStmt.condition.type);
+            if(forStmt.condition.type != ASTEnums.INT){
+                report(forStmt.lineNumber,"For statement condition expects type INT, but got " + forStmt.condition.type);
             }
         }
 
@@ -115,7 +114,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
             forStmt.update.accept(this);
         }
 
-        for(Stmt stmt: forStmt.statements){
+        for(Stmt stmt: forStmt.body){
             stmt.accept(this);
         }
 
@@ -129,13 +128,13 @@ public class SemanticChecker implements ASTVisitor<Object>{
     public Object visitIfStmt(If ifStmt) {
         ifStmt.condition.accept(this);
 
-        if(ifStmt.condition.type != DataType.INT){
-            report("If statement condition of wrong type. Expected INT, but got " + ifStmt.condition.type);
+        if(ifStmt.condition.type != ASTEnums.INT){
+            report(ifStmt.lineNumber,"If statement condition of wrong type. Expected INT, but got " + ifStmt.condition.type);
         }
 
         environment.enterCodeBlock();
 
-        for(Stmt stmt: ifStmt.statements){
+        for(Stmt stmt: ifStmt.body){
             stmt.accept(this);
         }
 
@@ -150,16 +149,16 @@ public class SemanticChecker implements ASTVisitor<Object>{
     public Object visitRetStmt(Ret retStmt) {
         retStmt.expr.accept(this);
 
-        Decl.Func currentFunc = environment.getCurrentFunction();
+        Decl.Func function = environment.fetchCurrentFunction();
 
         if(retStmt.expr == null){
-            if(currentFunc.type != DataType.VOID){
-                report("Invalid return type. Expected VOID ,but got " + retStmt.expr.type);
+            if(function.type != ASTEnums.VOID){
+                report(retStmt.lineNumber,"Invalid return type. Expected VOID ,but got " + retStmt.expr.type);
            }
         }
         else{
-            if(currentFunc.type != retStmt.expr.type){
-                report("Invalid return type. Expected " +  currentFunc.type +" ,but got " + retStmt.expr.type);
+            if(function.type != retStmt.expr.type){
+                report(retStmt.lineNumber,"Invalid return type. Expected " +  function.type +" ,but got " + retStmt.expr.type);
             }
         }
 
@@ -169,24 +168,30 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitVarDecl(Var varDecl) {
-        if(DECLARING_GLOBAL_FUNCTIONS){
-            return null;
+    public Object visitVarDecl(Decl.Var varDecl) { 
+        if(varDecl.type == ASTEnums.VOID){
+            report(varDecl.lineNumber,"Declaring a variable with type void '" + varDecl.identifier + "'");
+            varDecl.type = ASTEnums.UNDEFINED;
         }
-        
-        environment.declareVar(varDecl.identifier,varDecl.type);
-        
-        // TODO: We will move this in visitBinaryExpression later
+
+        if(environment.isVarDeclaredLocally(varDecl.identifier)){
+            report(varDecl.lineNumber,"Declaring a variable with the same name in same code block '" + varDecl.identifier +"'");
+        }
+        else{
+            environment.declareVar(varDecl.identifier,varDecl.type);
+        }
+
+
         if(varDecl.expr != null){
             varDecl.expr.accept(this);
 
-            if(varDecl.expr.type != varDecl.type){
-                report("Assigning a wrong type to variable "+varDecl.identifier+". Expected "+varDecl.type +" ,but got " + varDecl.expr.type);
+            if(varDecl.expr.type != varDecl.type && varDecl.type != ASTEnums.UNDEFINED){
+                report(varDecl.lineNumber,"Assigning a wrong type to variable "+varDecl.identifier+". Expected "+varDecl.type +" ,but got " + varDecl.expr.type);
             }
    
-            // This way we just tell the environment that the varible has been initialized here. It doesn't matter which value we pass since we won't be using it
+            // This way we just tell the environment that a varible has been initialized. It doesn't matter which value we pass since we won't be using it
             // We are only performing semantic checks now.
-            environment.assignVar(varDecl.identifier, null, varDecl.type);
+            environment.assignVar(varDecl.identifier, null);
 
         }
 
@@ -197,19 +202,23 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
     @Override
     public Object visitFuncDecl(Func funcNode) {
-        if(DECLARING_GLOBAL_FUNCTIONS){
-            globalFunctions.add(funcNode);
-            environment.declareFunction(funcNode.funcName, funcNode, funcNode.type);
-            return null;
-        }
 
-        environment.enterFunction(funcNode.funcName);
+        environment.enterFunction(funcNode.identifier);
         
+        // Note that we have alredy checked param semantics of every function at the start of the semantic analisys process
+        // So we don't need to do that here
         for(Param param:funcNode.params){
-            environment.declareVar(param.identifier, param.type);
+
+            if(environment.isVarDeclared(param.identifier)){
+                report(funcNode.lineNumber,"Declaring two or more parameters with the same name '" + param.identifier +"'");
+            }
+            else{
+                environment.declareVar(param.identifier, param.type);
+            }
+
         }
 
-        for(Stmt stmt: funcNode.statements){
+        for(Stmt stmt: funcNode.body){
             stmt.accept(this);
         }
 
@@ -219,11 +228,11 @@ public class SemanticChecker implements ASTVisitor<Object>{
     }
 
 
-    // We have alredy declared param type in it's constructor
+    // We have alredy know param's type. It was given in it's constructor
     @Override
     public Object visitParamDecl(Param param) {
-        if(param.type == DataType.UNDEFINED || param.type == DataType.VOID){
-            report("Invalid parameter data type "+ param.type);
+        if(param.type == ASTEnums.UNDEFINED || param.type == ASTEnums.VOID){
+            report(param.lineNumber,"Invalid parameter data type "+ param.type);
         }
 
         return null;
@@ -232,30 +241,30 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitBinaryExpr(Binary binary) {
+    public Object visitBinaryExpr(Expr.Binary binary) {
         binary.left.accept(this);
         binary.right.accept(this);
 
         if(binary.left.type != binary.right.type){
-            report("Binary expression: Unmatching types " + binary.left.type +" " + binary.operation +" " +binary.right.type);
-            binary.type = DataType.UNDEFINED;
+            report(binary.lineNumber,"Binary expression: Unmatching types " + binary.left.type +" " + binary.operator +" " +binary.right.type);
+            binary.type = ASTEnums.UNDEFINED;
             return null;
         }
         
         // If both operands are of type STRING, we need to check if we're applying 
-        // permitted operations for the STRING DataType
+        // permitted operations for the STRING ASTEnums
         binary.type = binary.left.type;
-        if(binary.type == DataType.STRING){
+        if(binary.type == ASTEnums.STRING){
            
-            switch (binary.operation) {
+            switch (binary.operator) {
                 case PLUS:
                 case EQUAL:
                 case NOT_EQUAL:
                     break;  // We're OK
 
                 default:
-                    report("Binary expression: Applying invalid operation " + binary.operation + " to STRING data type");
-                    binary.type = DataType.UNDEFINED;
+                    report(binary.lineNumber,"Binary expression: Applying invalid operation " + binary.operator + " to STRING data type");
+                    binary.type = ASTEnums.UNDEFINED;
             }
         }
 
@@ -268,50 +277,72 @@ public class SemanticChecker implements ASTVisitor<Object>{
     public Object visitUnaryExpr(Unary unary) {
         unary.expr.accept(this);
 
-        if(unary.expr.type != DataType.INT){
-            report("Unary expression: Applying operator " + unary.operation + " to an invalid type");
-            unary.type = DataType.UNDEFINED;
+        if(unary.expr.type != ASTEnums.INT){
+            report(unary.lineNumber,"Unary expression: Applying operator " + unary.operator + " to an invalid type");
+            unary.type = ASTEnums.UNDEFINED;
+        }
+
+        return null;
+
+    }
+
+
+    // We have alredy know literal's type. It was given in it's constructor
+    @Override
+    public Object visitLiteralExpr(Literal literal){
+        return null;
+    }
+
+
+    @Override
+    public Object visitAssignExpr(Assign assignment) {
+        ASTEnums varType;
+
+        if(environment.isVarDeclared(assignment.identifier)){
+            varType = environment.fetchVarType(assignment.identifier);
+            // This way we just tell the environment that here the variable has been initialized or assigned to
+            environment.assignVar(assignment.identifier, null);
         }
         else{
-            unary.type = unary.expr.type;
+            report(assignment.lineNumber,"Assigning to an undeclared variable '" + assignment.identifier + "'");
+            varType = ASTEnums.UNDEFINED;
+        }
+        
+        assignment.expr.accept(this);
+
+        if(assignment.expr.type != varType && varType != ASTEnums.UNDEFINED){
+            report(assignment.lineNumber,"Wrong type being assigned to '"+assignment.identifier+"' . Expected " + varType + " , but got " + assignment.expr.type);
         }
 
-        return null;
 
-    }
-
-
-    // We had alredy deducted Literal's type in it's constructor 
-    @Override
-    public Object visitLiteralExpr(Literal expr){
-        return null;
-    }
-
-
-    @Override
-    public Object visitEnclosedExpr(Enclosed enclosed) {
-        enclosed.expr.accept(this);
-        enclosed.type = enclosed.expr.type;
         return null;
     }
 
 
     @Override
     public Object visitCallExpr(Call call) {
-        Decl.Func function = environment.fetchFunc(call.identifier);
+        if(!environment.isFuncDeclared(call.funcIdentifier)){
+            report(call.lineNumber,"Calling an undeclared function '" + call.funcIdentifier + "'");
+            call.type = ASTEnums.UNDEFINED;
+            return null;
+        }
+
+
+        Decl.Func function = environment.fetchFunc(call.funcIdentifier);
+        
         call.type = function.type;
 
         int argCnt = call.arguments.size();
         int paramCnt = function.params.size();
 
         if(argCnt != paramCnt){
-            report("Call to "+ call.identifier + ". Wrong number of arguments. Expected " + paramCnt +" ,but got "+ argCnt);
+            report(call.lineNumber,"Call to '"+ call.funcIdentifier + "' ==> Wrong number of arguments. Expected " + paramCnt +" ,but got "+ argCnt);
         }
 
         int argsToCheck = Math.min(argCnt,paramCnt);
-        for(int i=0;i<argsToCheck;i++){
+        for(int i = 0; i < argsToCheck; i++){
             if(call.arguments.get(i).type != function.params.get(i).type){
-                report("Call to "+call.identifier+" .Argument number " + Integer.toString(i+1) + "is of wrong type. Expected " + function.params.get(i).type +" ,but got" + call.arguments.get(i).type);
+                report(call.lineNumber,"Call to '"+call.funcIdentifier+"'' ==> Argument number " + Integer.toString(i+1) + " is of wrong type. Expected " + function.params.get(i).type +" ,but got " + call.arguments.get(i).type);
             }
         }
 
@@ -321,19 +352,26 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
     @Override
     public Object visitVariableExpr(Variable variable) {
-        variable.type = environment.getVarType(variable.identifier);
-        
-        // We can't use uninitialized variables. This checks if we've intialized the variable before using it.
-        // If not it throws an error
-        environment.fetchVar(variable.identifier);
+        if(environment.isVarDeclared(variable.identifier)){
+            variable.type = environment.fetchVarType(variable.identifier);
+            
+            if(!environment.isVarInitialized(variable.identifier)){
+                report(variable.lineNumber, "Using an uninitialized variable '" + variable.identifier + "'");
+            }
+
+        }
+        else{
+            report(variable.lineNumber,"Using an undeclared variable " + variable.identifier + "'");
+            variable.type = ASTEnums.UNDEFINED;
+        }
 
         return null;
     }
 
 
 
-    private void report(String s){
+    private void report(int lineNumber,String s){
         ERROR_OCCURED = true;
-        System.out.println("Error: " + s);
+        System.out.println("Line " + lineNumber +": " + s);
     }
 }

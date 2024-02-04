@@ -25,24 +25,29 @@ public class Parser {
         this.iter = new TokenIterator(tokens);
 
         errorOccured = false;
-        ArrayList<Stmt> statements = new ArrayList<Stmt>();
-       
-        while(iter.hasTokens()){
-            Token token = iter.getToken();
-            
-            if(token.getType() != TType.FN && token.getType() != TType.VAR){
-                System.out.println("Parser::ParseProgram: Token "+token+" doesn't match any declaration rule");
+        ArrayList<Stmt.DeclStmt> funcDeclarations = new ArrayList<Stmt.DeclStmt>();
+        ArrayList<Stmt.DeclStmt>  varDeclarations = new ArrayList<Stmt.DeclStmt>();
+
+        while(iter.hasTokens()){            
+            Stmt.DeclStmt statement = parseDeclStmt();
+
+            if(statement.declaration instanceof Decl.Func){
+                funcDeclarations.add(statement);
+            }
+            else if(statement.declaration instanceof Decl.Var){
+                varDeclarations.add(statement);
+            }
+            else{
+                System.out.println("Parser.parseProgram: An invalid declaration statement");
                 System.exit(0);
             }
-
-            statements.add(parseDeclStmt());
         }
 
         if(errorOccured){
             return null;
         }
 
-        return new Program(statements);
+        return new Program(funcDeclarations,varDeclarations);
     }
 
 
@@ -55,7 +60,8 @@ public class Parser {
         try{
             switch(iter.getToken().getType()){
                 case FN:
-                case VAR:
+                case TYPE_INT:
+                case TYPE_STR:
                     return parseDeclStmt();
                 
                 case WHILE:
@@ -83,25 +89,21 @@ public class Parser {
 
     private Stmt parseExprStmt(){
         Expr expr;
-        Token identifier = null;
-
-        if(iter.getNextToken().getType() == TType.EQUAL){
-            forceMatch(TType.IDENTIFIER);
-            identifier = iter.getPrevToken();
-            forceMatch(TType.EQUAL);
-        }
+        int lineNumber = iter.getToken().getLineNumber();
 
         expr = parseExpr();
         forceMatch(TType.SEMICOLON);
 
-        return new Stmt.ExprStmt(identifier,expr);
+        return new Stmt.ExprStmt(expr,lineNumber);
     }
 
 
-    private Stmt parseDeclStmt(){
+    private Stmt.DeclStmt parseDeclStmt(){
+        int lineNumber = iter.getToken().getLineNumber();
         Decl declaration;
 
-        if(match(TType.VAR)){
+        Token token = iter.getToken();
+        if(token.getType() == TType.TYPE_INT || token.getType() == TType.TYPE_STR){
             declaration = parseVarDecl();
             forceMatch(TType.SEMICOLON);
         }
@@ -110,11 +112,13 @@ public class Parser {
             declaration = parseFuncDecl();
         }
 
-        return new Stmt.DeclStmt(declaration);
+        return new Stmt.DeclStmt(declaration,lineNumber);
     }
 
 
-    private Stmt parseWhileStmt(){
+    private Stmt.While parseWhileStmt(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         forceMatch(TType.WHILE);
         
         forceMatch(TType.LEFT_PAREN);
@@ -128,11 +132,13 @@ public class Parser {
             statements.add(parseStmt());
         }
 
-        return new Stmt.While(condition, statements);
+        return new Stmt.While(condition, statements,lineNumber);
     }
 
 
-    private Stmt parseForStmt(){
+    private Stmt.For parseForStmt(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         forceMatch(TType.FOR);
         forceMatch(TType.LEFT_PAREN);
 
@@ -162,11 +168,13 @@ public class Parser {
             statements.add(parseStmt());
         }
 
-        return new Stmt.For(varDecl, condition, update,statements);
+        return new Stmt.For(varDecl, condition, update,statements,lineNumber);
     }
 
 
-    private Stmt parseIfStmt(){
+    private Stmt.If parseIfStmt(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         forceMatch(TType.IF);
         
         forceMatch(TType.LEFT_PAREN);
@@ -179,11 +187,13 @@ public class Parser {
             statements.add(parseStmt());
         }
 
-        return new Stmt.If(condition, statements);
+        return new Stmt.If(condition, statements,lineNumber);
     }
 
 
-    private Stmt parseRetStmt(){
+    private Stmt.Ret parseRetStmt(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         forceMatch(TType.RETURN);
 
         Expr expr = null;
@@ -192,7 +202,7 @@ public class Parser {
             forceMatch(TType.SEMICOLON);
         }
 
-        return new Stmt.Ret(expr);
+        return new Stmt.Ret(expr,lineNumber);
     }
 
 
@@ -202,27 +212,31 @@ public class Parser {
     //============= DECLARATIONS ===================
 
     private Decl.Var parseVarDecl(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         forceMatch(TType.TYPE_INT,TType.TYPE_STR);
-        Token type = iter.getPrevToken();
+        ASTEnums type = toAstType(iter.getPrevToken().getType());
 
         forceMatch(TType.IDENTIFIER);
-        Token identifier = iter.getPrevToken();
+        String identifier = iter.getPrevToken().getString();
 
         Expr expr = null;
         if(match(TType.EQUAL)){
             expr = parseExpr();
         }
 
-        return new Decl.Var(type,identifier,expr);
+        return new Decl.Var(type,identifier,expr,lineNumber);
     }
 
 
-    private Decl parseFuncDecl(){
+    private Decl.Func parseFuncDecl(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         forceMatch(TType.TYPE_INT,TType.TYPE_STR,TType.TYPE_VOID);
-        Token type = iter.getPrevToken();
+        ASTEnums type = toAstType(iter.getPrevToken().getType());
 
         forceMatch(TType.IDENTIFIER);
-        Token identifier = iter.getPrevToken();
+        String identifier = iter.getPrevToken().getString();
         
         forceMatch(TType.LEFT_PAREN);
 
@@ -243,18 +257,20 @@ public class Parser {
             statements.add(parseStmt());
         }
     
-        return new Decl.Func(type, identifier, parameters,statements);
+        return new Decl.Func(type, identifier, parameters,statements,lineNumber);
     }
 
 
     private Decl.Param parseParamDecl(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         forceMatch(TType.IDENTIFIER,TType.TYPE_INT,TType.TYPE_STR);
-        Token type = iter.getPrevToken();
+        ASTEnums type = toAstType(iter.getPrevToken().getType());
 
         forceMatch(TType.IDENTIFIER);
-        Token identifier = iter.getPrevToken();
+        String identifier = iter.getPrevToken().getString();
 
-        return new Decl.Param(type, identifier);
+        return new Decl.Param(type, identifier,lineNumber);
     }
 
 
@@ -264,20 +280,38 @@ public class Parser {
     //============= EXPRESSIONS ===============
 
 
-    // TODO: Add assign expression type. It should produce a binaryExpr node
     public Expr parseExpr(){
-        return parseEquality();
+        return parseAssign();
     }
 
 
+    public Expr parseAssign(){
+        int lineNumber = iter.getToken().getLineNumber();
+
+
+        if(iter.getNextToken().getType() == TType.EQUAL){
+            forceMatch(TType.IDENTIFIER);
+            String identifier = iter.getPrevToken().getString();
+            forceMatch(TType.EQUAL);
+            
+            return new Expr.Assign(identifier, parseEquality(), lineNumber); 
+        }
+        else{
+            return parseEquality();
+        }
+
+
+    }
+
 
     private Expr parseEquality(){
+        int lineNumber = iter.getToken().getLineNumber();
         Expr expr = parseComparison();
 
         while(match(TType.BANG_EQUAL, TType.EQUAL_EQUAL)){
-            Token operation = iter.getPrevToken();
+            ASTEnums operation = toAstType(iter.getPrevToken().getType());
             Expr right = parseComparison();
-            expr = new Expr.Binary(expr,operation,right);
+            expr = new Expr.Binary(expr,operation,right,lineNumber);
         }
 
         return expr;
@@ -285,12 +319,13 @@ public class Parser {
 
 
     private Expr parseComparison(){
+        int lineNumber = iter.getToken().getLineNumber();
         Expr expr = parseAddition();
 
         while(match(TType.GREATER, TType.GREATER_EQUAL,TType.LESS,TType.LESS_EQUAL)){
-            Token operation = iter.getPrevToken();
+            ASTEnums operation = toAstType(iter.getPrevToken().getType());
             Expr right = parseAddition();
-            expr = new Expr.Binary(expr,operation,right);
+            expr = new Expr.Binary(expr,operation,right,lineNumber);
         }
 
         return expr;
@@ -298,12 +333,13 @@ public class Parser {
 
 
     private Expr parseAddition(){
+        int lineNumber = iter.getToken().getLineNumber();
         Expr expr = parseMultiplication();
 
         while(match(TType.MINUS,TType.PLUS)){
-            Token operation = iter.getPrevToken();
+            ASTEnums operation = toAstType(iter.getPrevToken().getType());
             Expr right = parseMultiplication();
-            expr = new Expr.Binary(expr, operation, right);
+            expr = new Expr.Binary(expr, operation, right,lineNumber);
         }
         
         return expr;
@@ -312,12 +348,13 @@ public class Parser {
 
 
     private Expr parseMultiplication(){
+        int lineNumber = iter.getToken().getLineNumber();
         Expr expr = parseTerm();
 
         while(match(TType.STAR,TType.SLASH)){
-            Token operaToken = iter.getPrevToken();
+            ASTEnums operation = toAstType(iter.getPrevToken().getType());
             Expr right = parseTerm();
-            expr = new Expr.Binary(expr, operaToken, right);
+            expr = new Expr.Binary(expr, operation, right,lineNumber);
         }
 
         return expr;
@@ -325,9 +362,11 @@ public class Parser {
 
 
     private Expr parseTerm(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         if(match(TType.MINUS,TType.BANG)){
-            Token operation = iter.getPrevToken();
-            return new Expr.Unary(operation, parsePrimary());
+            ASTEnums operation = toAstType(iter.getPrevToken().getType());
+            return new Expr.Unary(operation, parsePrimary(),lineNumber);
         }
 
         return parsePrimary();
@@ -335,9 +374,13 @@ public class Parser {
 
     
     private Expr parsePrimary(){
+        int lineNumber = iter.getToken().getLineNumber();
+
         // Literal value
         if(match(TType.NUM_LITERAL,TType.STRING_LITERAL,TType.TRUE,TType.FALSE,TType.NULL)){
-            return new Expr.Literal(iter.getPrevToken());
+            String value = iter.getPrevToken().getString();
+            ASTEnums type = toAstType(iter.getPrevToken().getType());
+            return new Expr.Literal(value,type,lineNumber);
         }
 
         // Enclosed expression
@@ -348,11 +391,11 @@ public class Parser {
         }
 
         forceMatch(TType.IDENTIFIER);
-        Token identifier = iter.getPrevToken();
+        String identifier = iter.getPrevToken().getString();
         
         // Identifier
         if( !match(TType.LEFT_PAREN) ){
-            return new Expr.Variable(identifier);
+            return new Expr.Variable(identifier,lineNumber);
         }
 
         // Function call
@@ -366,7 +409,7 @@ public class Parser {
             }
         }
 
-        return new Expr.Call(identifier, args);
+        return new Expr.Call(identifier, args,lineNumber);
     }
     
 
@@ -392,7 +435,25 @@ public class Parser {
     private void forceMatch(TType ... types){
         if(!match(types)){
             errorOccured = true;
-            System.out.println("Unexpected token '" + iter.getToken()+"' at line " + iter.getToken().getLineNumber());
+            
+            StringBuilder sb = new StringBuilder();
+            
+            if(iter.getToken().getType() == TType.IDENTIFIER){
+                sb.append("Line " + iter.getToken().getLineNumber() +": Unexpected token '" + iter.getToken().getString() );
+            }
+            else{
+                sb.append("Line " + iter.getToken().getLineNumber() +": Unexpected token '" + iter.getToken().getType() );
+            }
+            
+            sb.append(" . Expected tokens: ");
+
+            for(int i=0;i<types.length;i++){
+                sb.append(types[i]);
+                if(i != types.length - 1) sb.append(" or ");
+            }
+
+            System.out.println(sb.toString());
+
             throw new UnexpectedTokenException();
         }
     }
@@ -405,6 +466,17 @@ public class Parser {
     private void synchronize(){
         iter.advance();
 
+        switch (iter.getPrevToken().getType()) {
+            case SEMICOLON:
+            case RIGHT_BRACE:
+            case LEFT_BRACE:
+                return;
+
+            default:
+                break;
+        }
+
+
         while(iter.hasTokens()){
             
             switch(iter.getToken().getType()){
@@ -413,10 +485,13 @@ public class Parser {
                 case FOR:
                 case RETURN:
                 case FN:
-                case VAR:
+                case TYPE_INT:
+                case TYPE_STR:
                     return;
 
                 case SEMICOLON:
+                case RIGHT_BRACE:
+                case LEFT_BRACE:
                     iter.advance();
                     return;
 
@@ -425,6 +500,54 @@ public class Parser {
             }
 
             iter.advance();
+        }
+    }
+
+
+
+
+    private static ASTEnums toAstType(TType type){
+        switch (type) {
+
+            // Data types
+            case TYPE_STR:
+            case STRING_LITERAL:
+                return ASTEnums.STRING;
+            case NUM_LITERAL:
+            case TYPE_INT:
+                return ASTEnums.INT;
+            case TYPE_VOID:
+                return ASTEnums.VOID;
+
+            // Operators
+            case PLUS:
+                return ASTEnums.PLUS;
+            case MINUS:
+                return ASTEnums.MINUS;
+            case STAR:
+                return ASTEnums.MULTIPLY;
+            case SLASH:
+                return ASTEnums.DIVIDE;
+            case EQUAL_EQUAL:
+                return ASTEnums.EQUAL;
+            case BANG_EQUAL:
+                return ASTEnums.NOT_EQUAL;
+            case BANG:
+                return ASTEnums.NOT;
+            case GREATER:
+                return ASTEnums.GREATER;
+            case GREATER_EQUAL:
+                return ASTEnums.GREATER_EQ;
+            case LESS:
+                return ASTEnums.LESS;
+            case LESS_EQUAL:
+                return ASTEnums.LESS_EQ;
+            
+
+            default:
+                System.out.println("Parser cannot translate " + type + " into any ASTEnums type");
+                System.exit(0);
+                return ASTEnums.UNDEFINED;
         }
     }
 

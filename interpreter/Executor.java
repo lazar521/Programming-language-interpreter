@@ -15,17 +15,8 @@ public class Executor implements ASTVisitor<Object>{
 
     @Override
     public Object visitProgram(Program prog) {
-        environment = new Environment();
+        throw new UnsupportedOperationException("Unimplemented method 'executeDeclStmt'");
 
-        for(Stmt stmt:prog.statements){
-            stmt.accept(this);
-        }
-
-        environment.fetchVar("main");
-        
-
-
-        return null;
     }
 
 
@@ -90,7 +81,7 @@ public class Executor implements ASTVisitor<Object>{
         Object left = expr.left.accept(this);
         Object right = expr.right.accept(this);
 
-        switch(expr.operation){
+        switch(expr.operator){
             case MULTIPLY:
                 return (int)left * (int)right;
             case DIVIDE:
@@ -113,7 +104,7 @@ public class Executor implements ASTVisitor<Object>{
 
         Object operand = expr.accept(this);
 
-        switch(expr.operation){
+        switch(expr.operator){
             case MINUS:
                 return -(int)operand;
             case NOT:
@@ -146,9 +137,14 @@ public class Executor implements ASTVisitor<Object>{
     }
 
     @Override
-    public Object visitEnclosedExpr(Enclosed enclosed) {
-        return enclosed.expr.accept(this);
+    public Object visitAssignExpr(Assign expr) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitAssignExpr'");
     }
+
+
+    
+
 
     @Override
     public Object visitCallExpr(Call call) {
@@ -158,10 +154,10 @@ public class Executor implements ASTVisitor<Object>{
 
     @Override
     public Object visitVariableExpr(Variable variable) {
-        variable.type = environment.getVarType(variable.identifier);
+        //variable.type = environment.fetchVarType(variable.identifier);
         return environment.fetchVar(variable.identifier);
     }
 
 
-    
+
 }
