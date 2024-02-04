@@ -1,2 +1,11 @@
 -When parser encounters an error and it starts skipping tokens it can skip a '{' ,for example, and then cannot match '}' later
--Write the code executor
+
+
+-Functions can be written without any return statement. Fix that    ===> IMPORTANT
+-Add break statement
+
+
+
+-Declarations cannot be done inside loops or they will be performed multiple times
+-Functions should not be nested inside other functions   
+-Global declarations cannot use function calls

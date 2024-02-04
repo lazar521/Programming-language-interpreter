@@ -130,12 +130,22 @@ public class Environment{
 
 
     public Object fetchVar(String name){
-        if(localScope != null && localScope.isDeclared(name) && localScope.isInitialized(name)){
-            return localScope.fetch(name);
+        if(localScope != null && localScope.isDeclared(name)){
+            if(localScope.isInitialized(name)){
+                return localScope.fetch(name);
+            }
+            else{
+                error("Environment.fetchVar: Fetching an uninitialized variable '" + name + "'");
+            }
         }
         
-        if(globalScope.isDeclared(name) && globalScope.isInitialized(name)){
-            return globalScope.fetch(name);
+        if(globalScope.isDeclared(name)){
+            if(globalScope.isInitialized(name)){
+                return globalScope.fetch(name);
+            }
+            else{
+                error("Environment.fetchVar: Fetching an uninitialized variable '" + name + "'");
+            }
         }
 
         error("Environment.fetchVar: Fetching an undeclared variable '" + name + "'");
@@ -197,6 +207,10 @@ public class Environment{
 
 
     public void enterFunction(String name){
+        if(callStack.size() == 100){
+            error("Maximum function call stack size of 100 reached. Exiting.");
+        }
+
         localScope = new DeclarationtTable();
         callStack.push(new FunctionCall(name,localScope));
     }
@@ -217,7 +231,7 @@ public class Environment{
 
 
     public void error(String s){
-        System.out.println(s);
+        System.out.println("Internal error: " + s);
         System.exit(0);
     }
 

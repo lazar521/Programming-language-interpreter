@@ -78,10 +78,12 @@ public abstract class Stmt implements ASTNode{
     public static class If extends Stmt{
         public Expr condition;
         public ArrayList<Stmt> body;
+        public ArrayList<Stmt> elseBody;
 
-        public If(Expr condition,ArrayList<Stmt> statements,int lineNumber){
+        public If(Expr condition,ArrayList<Stmt> statements,ArrayList<Stmt> elseStatements,int lineNumber){
             this.condition = condition;
             this.body = statements;
+            this.elseBody = elseStatements;
             this.lineNumber = lineNumber;
         }
 

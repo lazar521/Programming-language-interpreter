@@ -174,6 +174,7 @@ public Lexer(){}
         keywords.put("else",     TType.ELSE);
         keywords.put("while",    TType.WHILE);
         keywords.put("for",      TType.FOR);
+        keywords.put("else",     TType.ELSE);
         keywords.put("fn",       TType.FN);
         keywords.put("return",   TType.RETURN);
         keywords.put("void",     TType.TYPE_VOID);

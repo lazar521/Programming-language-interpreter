@@ -145,6 +145,15 @@ public class AstPrinter implements ASTVisitor<Void>{
         }
         indent--;
         
+        print("elseBody:");
+        if(stmt.elseBody != null){
+            indent++;
+            for(Stmt s: stmt.elseBody){
+                s.accept(this);
+            }
+            indent--;
+        }
+
         indent--;
         return null;
     }

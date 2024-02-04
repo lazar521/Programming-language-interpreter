@@ -48,6 +48,10 @@ public class SemanticChecker implements ASTVisitor<Object>{
             }
         }
 
+        if(!environment.isFuncDeclared("main")){
+            report(0, "Cannot execute without main() functions");
+        }
+
         // Here we're checking function bodies
         for(Stmt stmt:prog.funcDeclarations){
             stmt.accept(this);
@@ -133,12 +137,21 @@ public class SemanticChecker implements ASTVisitor<Object>{
         }
 
         environment.enterCodeBlock();
-
         for(Stmt stmt: ifStmt.body){
             stmt.accept(this);
         }
-
         environment.exitCodeBlock();
+
+
+        if(ifStmt.elseBody != null){
+
+            environment.enterCodeBlock();
+            for(Stmt stmt: ifStmt.elseBody){
+                stmt.accept(this);
+            }
+            environment.exitCodeBlock();
+
+        }
 
         return null;
     }
@@ -213,7 +226,9 @@ public class SemanticChecker implements ASTVisitor<Object>{
                 report(funcNode.lineNumber,"Declaring two or more parameters with the same name '" + param.identifier +"'");
             }
             else{
+                // Here we're telling the environment that the parameters are declared and initialized inside the funciton body
                 environment.declareVar(param.identifier, param.type);
+                environment.assignVar(param.identifier, null);
             }
 
         }
@@ -276,11 +291,13 @@ public class SemanticChecker implements ASTVisitor<Object>{
     @Override
     public Object visitUnaryExpr(Unary unary) {
         unary.expr.accept(this);
+        unary.type = unary.expr.type;
 
-        if(unary.expr.type != ASTEnums.INT){
+        if(unary.type != ASTEnums.INT){
             report(unary.lineNumber,"Unary expression: Applying operator " + unary.operator + " to an invalid type");
             unary.type = ASTEnums.UNDEFINED;
         }
+        
 
         return null;
 
@@ -341,6 +358,8 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
         int argsToCheck = Math.min(argCnt,paramCnt);
         for(int i = 0; i < argsToCheck; i++){
+            call.arguments.get(i).accept(this);
+
             if(call.arguments.get(i).type != function.params.get(i).type){
                 report(call.lineNumber,"Call to '"+call.funcIdentifier+"'' ==> Argument number " + Integer.toString(i+1) + " is of wrong type. Expected " + function.params.get(i).type +" ,but got " + call.arguments.get(i).type);
             }

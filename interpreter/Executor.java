@@ -1,85 +1,183 @@
 package interpreter;
 
+import java.util.ArrayList;
+
+import ast.ASTEnums;
 import ast.ASTVisitor;
 import ast.Decl;
 import ast.Decl.*;
 import ast.Expr.*;
+import ast.Expr;
 import ast.Program;
 import ast.Stmt;
 import ast.Stmt.*;
 import interpreter.environment.Environment;
-import ast.ASTEnums.*;
 
 public class Executor implements ASTVisitor<Object>{
     private Environment environment;
 
     @Override
     public Object visitProgram(Program prog) {
-        throw new UnsupportedOperationException("Unimplemented method 'executeDeclStmt'");
+        environment = new Environment();
 
+        for(Stmt varDeclStmt: prog.varDeclarations){
+            varDeclStmt.accept(this);
+        }
+
+        for(Stmt.DeclStmt funcDeclStmt: prog.funcDeclarations){
+            Decl.Func decl = (Decl.Func) funcDeclStmt.declaration;
+
+            environment.declareFunction(decl.identifier, decl, decl.type);
+        }
+
+        // TODO: make integrated functions
+        
+        environment.enterFunction("main");
+        Decl.Func mainFunc = environment.fetchFunc("main");
+
+        return mainFunc.accept(this);
     }
 
 
     @Override
-    public Object visitExprStmt(ExprStmt stmt) {
-        // TODO: Add assign operation
-        return stmt.expr.accept(this);
+    public Object visitExprStmt(ExprStmt exprStmt) {
+        exprStmt.expr.accept(this);
+        return null;
+    }
+
+
+    @Override
+    public Object visitDeclStmt(DeclStmt declStmt) {
+        declStmt.declaration.accept(this);
+        return null;
+    }
+
+
+
+    @Override
+    public Object visitWhileStmt(While whileStmt) {
+        environment.enterCodeBlock();
+        
+        while( (int) whileStmt.condition.accept(this) != 0){
+            for(Stmt stmt: whileStmt.body){
+                stmt.accept(this);
+            }
+        }
+
+        environment.exitCodeBlock();
+
+        return null;
+    }
+
+
+    // TODO: For statement written like this expects all of the fields to be non null
+    @Override
+    public Object visitForStmt(For forStmt) {
+        environment.enterCodeBlock();
+
+        if(forStmt.varDeclaration != null) forStmt.varDeclaration.accept(this);
+
+
+        while(true){
+            if(forStmt.condition != null &&  ((int)forStmt.condition.accept(this) == 0) ){
+                break;
+            }
+
+            for(Stmt stmt: forStmt.body){
+                stmt.accept(this);
+            }
+
+            if(forStmt.update != null) forStmt.update.accept(this);
+        }
+
+        environment.exitCodeBlock();
+
+        return null;
     }
 
     @Override
-    public Object visitDeclStmt(DeclStmt stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeDeclStmt'");
+    public Object visitIfStmt(If ifStmt) {
+        int res = (int) ifStmt.condition.accept(this);
+
+        environment.enterCodeBlock();
+        if(res != 0){
+            for(Stmt stmt: ifStmt.body){
+                stmt.accept(this);
+            }
+        }
+        else if(ifStmt.elseBody != null){
+            for(Stmt stmt: ifStmt.elseBody){
+                stmt.accept(this);
+            }
+        }
+
+        environment.exitCodeBlock();
+ 
+        return null; 
     }
 
     @Override
-    public Object visitWhileStmt(While stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeWhileStmt'");
+    public Object visitRetStmt(Ret retStmt) throws ReturnValueException{
+        Object retVal = null;
+        
+        if(retStmt.expr != null){
+            retVal = retStmt.expr.accept(this);
+        }
+        
+        throw new ReturnValueException(retVal);
     }
 
-    @Override
-    public Object visitForStmt(For stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeForStmt'");
-    }
-
-    @Override
-    public Object visitIfStmt(If stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeIfStmt'");
-    }
-
-    @Override
-    public Object visitRetStmt(Ret stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeRetStmt'");
-    }
 
     @Override
     public Object visitVarDecl(Var decl) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeVarDecl'");
+        environment.declareVar(decl.identifier, decl.type);
+        
+        if(decl.expr != null){
+            environment.assignVar(decl.identifier, decl.expr.accept(this));
+        }
+
+        return null;
     }
 
+
     @Override
-    public Object visitFuncDecl(Func decl) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeFuncDecl'");
+    public Object visitFuncDecl(Func funcDeclaration) {
+        
+        // First we execute the funciton body
+        // When we encounter a return statement we throw an exception that holds the return value.
+        // We catch it here and extract the return value. If exception is not thrown, 
+        // then the function's return type is void so it doesn't matter what we return 
+        try{
+            for(Stmt stmt: funcDeclaration.body){
+                stmt.accept(this);
+            }
+            return null;
+        }
+        catch(ReturnValueException returnException){
+            return returnException.value;
+        }
+
     }
+
+
 
     @Override
     public Object visitParamDecl(Param decl) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeParamDecl'");
+        environment.declareVar(decl.identifier, decl.type);
+        return null;
     }
 
+
+
     @Override
-    public Object visitBinaryExpr(Binary expr) {
-        // TODO: Add type checking
-        
+    public Object visitBinaryExpr(Binary expr) {        
         Object left = expr.left.accept(this);
         Object right = expr.right.accept(this);
+
+        // This should not ever happen here if the code passed the syntax check, but we check just in case for debug purposes if something goes wrong
+        if(expr.left.type != expr.right.type){
+            error("Executor.visitBinaryExpr: Binary expression non-matching types");
+        }
 
         switch(expr.operator){
             case MULTIPLY:
@@ -88,30 +186,47 @@ public class Executor implements ASTVisitor<Object>{
                 return (int)left / (int)right;
             case MINUS:
                 return (int)left - (int)right;
+           
             case PLUS:
-                // TODO: Add string concatenation
-                return (int)left + (int)right;
+                if(expr.type == ASTEnums.STRING) return (String)left + (String)right;
+                else return (int)left + (int)right;
+            
+            case EQUAL:
+                if(expr.type == ASTEnums.STRING) return boolToInt( ((String)left).equals((String)right) );
+                else return boolToInt( (int)left == (int) right );
+            
+            case NOT_EQUAL:
+                if(expr.type == ASTEnums.STRING) return boolToInt( !((String)left).equals((String)right) );
+                else return boolToInt( !((int)left == (int) right) );
+                
+            case LESS:
+                return boolToInt( (int)left < (int) right );
+            case LESS_EQ:
+                return boolToInt( (int)left <= (int) right );
+            case GREATER:
+                return boolToInt( (int)left > (int) right );
+            case GREATER_EQ:
+                return boolToInt( (int)left >= (int) right );
+
+
             default:
-                System.out.println("An invalid operation in Interpreter::visitBinaryExpr");
-                System.exit(0);    
+                error("Executor.visitBinaryExpr: Unrecognized operator " + expr.operator);
         }
         return null;
     }
 
     @Override
-    public Object visitUnaryExpr(Unary expr) {
-        // TODO: Add type checking
+    public Object visitUnaryExpr(Unary unary) {
+        int operand = (int) unary.expr.accept(this);
 
-        Object operand = expr.accept(this);
-
-        switch(expr.operator){
+        switch(unary.operator){
             case MINUS:
-                return -(int)operand;
+                return -operand;
             case NOT:
-                return !(boolean)operand;
+                if(operand == 0) return 1;
+                else return 0;
             default:
-                System.out.println("An invalid operation in Interpreter::visitUnaryExpr");
-                System.exit(0);
+                error("Executor.visitUnaryExpr: Unrecognized operator " + unary.operator);
         }
 
         return null;
@@ -119,8 +234,6 @@ public class Executor implements ASTVisitor<Object>{
 
     @Override
     public Object visitLiteralExpr(Literal expr) {
-        // Todo: Add type checking
-
         String value = expr.value; 
 
         switch(expr.type){
@@ -129,35 +242,84 @@ public class Executor implements ASTVisitor<Object>{
             case STRING:
                 return value;
             default:
-                System.out.println("An invalid type in Interpreter::visitLiteralExpr");
-                System.exit(0);
+                error("Executor.visitLiteralExpr: Invalid literal type " + expr.type);
         }
 
         return null;
     }
 
+
+
     @Override
-    public Object visitAssignExpr(Assign expr) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAssignExpr'");
+    public Object visitAssignExpr(Assign assignment) {
+        Object exprValue = assignment.expr.accept(this);
+        
+        environment.assignVar(assignment.identifier, exprValue);
+
+        return exprValue;
     }
 
-
-    
 
 
     @Override
     public Object visitCallExpr(Call call) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'executeCallExpr'");
+        Decl.Func funcNode = environment.fetchFunc(call.funcIdentifier);
+
+        // Calculating argument expressions before entering new function scope
+        ArrayList<Object> argValues = new ArrayList<>();
+        for(Expr arg:call.arguments){
+            argValues.add(arg.accept(this));
+        }
+
+        // Entering new scope and assigning parameters their respective values
+        environment.enterFunction(call.funcIdentifier);
+        
+        for(int i=0; i< funcNode.params.size();i++){
+            Object argVal = argValues.get(i);    
+            Param param = funcNode.params.get(i);
+            
+            environment.declareVar(param.identifier, param.type);
+            environment.assignVar(param.identifier, argVal);
+        }
+        
+        // Calling function body
+        Object retVal = funcNode.accept(this);
+        
+        environment.exitFunction();
+        
+        return retVal;
     }
+
+
+
 
     @Override
     public Object visitVariableExpr(Variable variable) {
-        //variable.type = environment.fetchVarType(variable.identifier);
         return environment.fetchVar(variable.identifier);
     }
 
 
 
+
+    private static class ReturnValueException extends RuntimeException{
+        private Object value;
+
+        public ReturnValueException(Object value){
+            this.value = value;
+        }
+    }
+
+
+
+
+    private static void error(String s){
+        System.out.println("Internal error: " + s);
+        System.exit(0);
+    }
+
+
+    private int boolToInt(boolean bool){
+        if(bool) return 1;
+        return 0;
+    }
 }

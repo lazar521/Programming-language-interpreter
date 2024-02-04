@@ -187,7 +187,16 @@ public class Parser {
             statements.add(parseStmt());
         }
 
-        return new Stmt.If(condition, statements,lineNumber);
+        ArrayList<Stmt> elseStatements = null;
+        if(match(TType.ELSE)){
+            forceMatch(TType.LEFT_BRACE);
+            elseStatements = new ArrayList<Stmt>();
+            while( !match(TType.RIGHT_BRACE) ){
+                elseStatements.add(parseStmt());
+            }
+        }
+
+        return new Stmt.If(condition, statements,elseStatements,lineNumber);
     }
 
 

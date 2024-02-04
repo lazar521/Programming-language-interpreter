@@ -47,15 +47,31 @@ public class Interpreter {
 
 
     private void start() throws Exception {
-        String text = loadFile(System.getProperty("user.dir") + "/test.txt");
+        String text = loadFile(System.getProperty("user.dir") + "/test.c");
         
         List<Token> tokens = lexer.makeTokens(text);
         Program program = parser.parseProgram(tokens);
-        if(program == null) return;
+        
+        if(program == null){
+            System.out.println("Syntax error. Cannot continue");
+            return;
+        }
 
+        
         program.accept(treePrinter);
-        semanticChecker.checkSemantics(program);
+
+        System.out.println("CHECKING SEMANTICS");
+        if( semanticChecker.checkSemantics(program) ){
+            System.out.println("\n\nEXECUTING CODE");
+            String val = (String) program.accept(codeExecutor);
+            System.out.println("The program returned ===> " + val);
+        }
+        else{
+            System.out.println("Cannot execute. Semantic errors in code");
+            return;
+        }
     }
+
 
 
     private static String loadFile(String path) throws FileNotFoundException {
