@@ -184,12 +184,12 @@ public class SemanticChecker implements ASTVisitor<Object>{
     @Override
     public Object visitVarDecl(Decl.Var varDecl) throws Exception { 
         if(varDecl.type == ASTEnums.VOID){
-            report(varDecl.lineNumber,"Declaring a variable with type void '" + varDecl.identifier + "'");
+            report(varDecl.lineNumber,"Declaring a variable with type VOID '" + varDecl.identifier + "'");
             varDecl.type = ASTEnums.UNDEFINED;
         }
 
         if(env.isVarDeclaredLocally(varDecl.identifier)){
-            report(varDecl.lineNumber,"Declaring a variable with the same name in same code block '" + varDecl.identifier +"'");
+            report(varDecl.lineNumber,"Declaring a variable with the same name twice in same code block '" + varDecl.identifier +"' , ignoring the second one");
         }
         else{
             env.declareVar(varDecl.identifier,varDecl.type);
@@ -274,8 +274,8 @@ public class SemanticChecker implements ASTVisitor<Object>{
             return null;
         }
         
-        // If both operands are of type STRING, we need to check if we're applying 
-        // permitted operations for the STRING ASTEnums
+        // If both operands are of type STRING, we need to check if we're using 
+        // permitted operations for the STRING data type
         binary.type = binary.left.type;
         if(binary.type == ASTEnums.STRING){
            
@@ -327,7 +327,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
         if(env.isVarDeclared(assignment.identifier)){
             varType = env.fetchVarType(assignment.identifier);
-            // This way we just tell the environment that here the variable has been initialized or assigned to
+            // This way we just tell the environment that here the variable has been initialized (or assigned to)
             env.assignVar(assignment.identifier, null);
         }
         else{

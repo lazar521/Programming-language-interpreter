@@ -13,9 +13,9 @@ import ast.Stmt;
 import ast.Stmt.*;
 import interpreter.environment.Environment;
 
+
 public class Executor implements ASTVisitor<Object>{
     private Environment env;
-
 
 
     public void executeProgram(Program program) throws Exception{
@@ -110,11 +110,13 @@ public class Executor implements ASTVisitor<Object>{
         return null;
     }
 
+
     @Override
     public Object visitIfStmt(If ifStmt) throws Exception {
         int res = (int) ifStmt.condition.accept(this);
 
         env.enterCodeBlock();
+        
         if(res != 0){
             for(Stmt stmt: ifStmt.body){
                 stmt.accept(this);
@@ -191,7 +193,7 @@ public class Executor implements ASTVisitor<Object>{
 
         // This should not ever happen here if the code passed the syntax check, but we check just in case for debug purposes if something goes wrong
         if(expr.left.type != expr.right.type){
-            error("Executor.visitBinaryExpr: Binary expression non-matching types");
+            internalError("visitBinaryExpr: Binary expression non-matching types");
         }
 
         switch(expr.operator){
@@ -222,10 +224,8 @@ public class Executor implements ASTVisitor<Object>{
                 return boolToInt( (int)left > (int) right );
             case GREATER_EQ:
                 return boolToInt( (int)left >= (int) right );
-
-
             default:
-                error("Executor.visitBinaryExpr: Unrecognized operator " + expr.operator);
+                internalError("visitBinaryExpr: Unrecognized operator " + expr.operator);
         }
         return null;
     }
@@ -241,7 +241,7 @@ public class Executor implements ASTVisitor<Object>{
                 if(operand == 0) return 1;
                 else return 0;
             default:
-                error("Executor.visitUnaryExpr: Unrecognized operator " + unary.operator);
+                internalError("visitUnaryExpr: Unrecognized operator " + unary.operator);
         }
 
         return null;
@@ -257,7 +257,7 @@ public class Executor implements ASTVisitor<Object>{
             case STRING:
                 return value;
             default:
-                error("Executor.visitLiteralExpr: Invalid literal type " + expr.type);
+                internalError("visitLiteralExpr: Invalid literal type " + expr.type);
         }
 
         return null;
@@ -331,12 +331,15 @@ public class Executor implements ASTVisitor<Object>{
 
 
 
-    private static void error(String message){
-        System.out.println("Internal error: " + message);
+
+
+
+    private void internalError(String message){
+        System.out.println("Internal error: Executor." + message);
         System.exit(0);
     }
 
-    private static void runtimeError(int lineNumber,String message) throws Exception{
+    private void runtimeError(int lineNumber,String message) throws Exception{
         System.out.println("Line " + lineNumber +": Runtime error: " + message);
         throw new Exception();
     }

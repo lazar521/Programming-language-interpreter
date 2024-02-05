@@ -52,7 +52,7 @@ public class Interpreter {
             String command = scanner.nextLine(); 
 
             executeCommand(command);
-            System.out.println("==================================================");
+            System.out.println("=====================================================================");
         }
 
         scanner.close();
