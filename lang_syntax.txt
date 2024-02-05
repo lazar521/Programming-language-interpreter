@@ -11,6 +11,7 @@ stmt -> exprStmt | assignStmt | declStmt | whileStmt | forStmt | ifStmt | retStm
 exprStmt -> expression ';'                                                      
 declStmt -> ( varDecl ';' | 'fn' funcDecl  )                             
 whileStmt -> 'while' '(' expression ')' '{' stmt* '}'
+breakStmt -> break ;
 forStmt -> for '(' varDecl? ';' expression? ';' expression? ')' '{' stmt* '}'
 ifStmt -> 'if' '(' expr ')' '{' stmt* '}'  
 retStmt -> 'return' expression? ';'

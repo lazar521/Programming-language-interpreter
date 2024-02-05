@@ -35,10 +35,7 @@ public Lexer(){}
                 case ')': addToken(TType.RIGHT_PAREN);break;
                 case '{': addToken(TType.LEFT_BRACE);break;
                 case '}': addToken(TType.RIGHT_BRACE);break;
-                case '[': addToken(TType.LEFT_BRACKET);break;
-                case ']': addToken(TType.RIGHT_BRACKET);break;
                 case ';': addToken(TType.SEMICOLON);break;
-                case '.': addToken(TType.DOT);break;
                 case ',': addToken(TType.COMMA);break;
                 case '-': addToken(TType.MINUS);break;
                 case '+': addToken(TType.PLUS);break;
@@ -105,6 +102,7 @@ public Lexer(){}
         else addToken(word, TType.IDENTIFIER);
     }
 
+
     private void tokenizeNumber() throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append(iter.getPrevChar());
@@ -118,6 +116,7 @@ public Lexer(){}
 
         addToken(sb.toString(), TType.NUM_LITERAL);
     }
+
 
     private void tokenizeString() throws Exception {
         StringBuilder sb = new StringBuilder();
@@ -161,7 +160,8 @@ public Lexer(){}
     }
 
     private void error(String message) throws Exception {
-        throw new Exception("Lexer: Line " + String.valueOf(lineNumber) + ": " + message);
+        System.out.println("Lexer: Line " + String.valueOf(lineNumber) + ": " + message);
+        throw new Exception();
     }
 
 
@@ -177,9 +177,9 @@ public Lexer(){}
         keywords.put("else",     TType.ELSE);
         keywords.put("fn",       TType.FN);
         keywords.put("return",   TType.RETURN);
-        keywords.put("void",     TType.TYPE_VOID);
-        keywords.put("int",      TType.TYPE_INT);
-        keywords.put("string",   TType.TYPE_STR);        
+        keywords.put("void",     TType.VOID);
+        keywords.put("int",      TType.INT);
+        keywords.put("string",   TType.STRING);        
     }
 
 

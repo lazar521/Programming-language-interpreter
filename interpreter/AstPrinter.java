@@ -8,41 +8,50 @@ import ast.Expr.Variable;
 
 
 public class AstPrinter implements ASTVisitor<Void>{
-    private static int indent = 0;
-    private static boolean printExpressions = true;
-    
-    
-    private static String makeIndent(){
+    private static String horizontalLine = "_____________________________________________________________________";
+
+    private int indent = 0;
+    private boolean printExpressions = true;
+
+  
+    private void print(String s){
         StringBuilder sb = new StringBuilder();
+        
         for(int i=0;i<indent;i++){
-            sb.append("    ");
+            sb.append("     ");
         }
-        return sb.toString();
+
+        String indentation = sb.toString();
+
+        System.out.println(indentation + s);
     }
 
-    private static void print(String s){
-        System.out.println(makeIndent() + s);
-    }
 
+    public  void printAST(Program program){
+        program.accept(this);
+    }
 
 
 
     @Override
     public Void visitProgram(Program prog) {
-        print("GLOBAL VARIABLES");
-        
-        indent++;
+        System.out.println(horizontalLine);
+        System.out.println("\n                      GLOBAL VARIABLES \n");
+
         for(Stmt s:prog.varDeclarations){
             s.accept(this);
+            System.out.println(horizontalLine);
         }
-        indent--;
 
-        print("FUNCTIONS");
-        indent++;
+        System.out.println(horizontalLine);
+       
+        System.out.println("\n                         FUNCTIONS\n");
+       
         for(Stmt s:prog.funcDeclarations){
             s.accept(this);
+            System.out.println(horizontalLine);
+
         }
-        indent--;
 
         return null;
     }
@@ -56,7 +65,7 @@ public class AstPrinter implements ASTVisitor<Void>{
 
     @Override
     public Void visitExprStmt(Stmt.ExprStmt stmt) {
-        print("ExprStmt");
+        print("Stmt.Expr");
 
         indent++;
         stmt.expr.accept(this);
@@ -75,16 +84,18 @@ public class AstPrinter implements ASTVisitor<Void>{
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
-        print("whileStmt");
+        print("Stmt.While");
 
         indent++;
 
-        print("condition:");
+        print("CONDITION:");
+
         indent++;
         stmt.condition.accept(this);
         indent--;
 
-        print("body:");
+        print("BODY:");
+
         indent++;
         for(Stmt s:stmt.body){
             s.accept(this);
@@ -98,26 +109,30 @@ public class AstPrinter implements ASTVisitor<Void>{
 
     @Override
     public Void visitForStmt(Stmt.For stmt) {
-        print("forStmt");
+        print("Stmt.For");
         indent++;
 
-        print("declaration:");
+        print("DECLARATION:");
+
         indent++;
         if(stmt.varDeclaration != null) stmt.varDeclaration.accept(this);
         indent--;
 
-        print("condition:");
+        print("CONDITION:");
+
         indent++;
         if(stmt.condition != null) stmt.condition.accept(this);
         indent--;
 
-        print("updater:");
+        print("UPDATER:");
+
         indent++;
         if(stmt.update != null) stmt.update.accept(this);
         indent--;
 
 
-        print("body:");
+        print("BODY:");
+
         indent++;
         for(Stmt s:stmt.body){
             s.accept(this);
@@ -128,24 +143,30 @@ public class AstPrinter implements ASTVisitor<Void>{
         return null;
     }
 
+
+
     @Override
     public Void visitIfStmt(Stmt.If stmt) {
-        print("ifStmt");
+        print("Stmt.If");
+
         indent++;
 
-        print("condition:");
+        print("CONDITION:");
+
         indent++;
         stmt.condition.accept(this);
         indent--;
 
-        print("body:");
+        print("BODY:");
+
         indent++;
         for(Stmt s: stmt.body){
             s.accept(this);
         }
         indent--;
         
-        print("elseBody:");
+        print("ELSE:");
+
         if(stmt.elseBody != null){
             indent++;
             for(Stmt s: stmt.elseBody){
@@ -155,15 +176,18 @@ public class AstPrinter implements ASTVisitor<Void>{
         }
 
         indent--;
+
         return null;
     }
 
     @Override
     public Void visitRetStmt(Stmt.Ret stmt) {
-        print("returnStmt");
+        print("Stmt.Ret");
+
         indent++;
         stmt.expr.accept(this);
         indent--;
+
         return null;
     }
 
@@ -174,16 +198,17 @@ public class AstPrinter implements ASTVisitor<Void>{
     
     @Override
     public Void visitVarDecl(Decl.Var decl) {
-        print("varDecl '" + decl.identifier + "'");
+        print("Decl.Var '" + decl.identifier + "'");
 
         indent++;
         
-        print("assign:");
-        indent++;
+        print("ASSIGN:");
+
         if(decl.expr != null) {
+            indent++;
             decl.expr.accept(this);
+            indent--;
         }
-        indent--;
 
         indent--;
         return null;
@@ -193,18 +218,19 @@ public class AstPrinter implements ASTVisitor<Void>{
 
     @Override
     public Void visitFuncDecl(Decl.Func decl) {
-        print("funcDecl '" + decl.identifier + "'");
+        print("Decl.Func '" + decl.identifier + "'");
 
         indent++;
         
-        print("parameters:");
+        print("PARAMETERS:");
+
         indent++;
         for(Decl.Param param:decl.params){
             param.accept(this);
         }
         indent--;
 
-        print("body:");
+        print("BODY:");
         
         indent++;
         for(Stmt s:decl.body){
@@ -212,12 +238,14 @@ public class AstPrinter implements ASTVisitor<Void>{
         }
         indent--;
         
+        indent--;
+
         return null;
     }
 
     @Override
     public Void visitParamDecl(Decl.Param decl) {
-        print("paramDecl '" + decl.identifier +"'");
+        print("Decl.Param '" + decl.identifier +"'");
         return null;
     }
 
@@ -257,19 +285,20 @@ public class AstPrinter implements ASTVisitor<Void>{
         if(!printExpressions) return null;
 
         if(expr.type == ASTEnums.STRING){
-            print("lit '" + expr.value +"'");
+            print("Expr.Lit \"" + expr.value +"\"");
         }
         else{
-            print("lit " + expr.value);
+            print("Expr.Lit " + expr.value);
         }
         return null;
     }
+
 
     @Override
     public Void visitAssignExpr(Assign assignment) {
         if(!printExpressions) return null;
 
-        print("assigning to '" + assignment.identifier +"'");
+        print("Expr.Assign '" + assignment.identifier +"'");
         
         indent++;
         assignment.expr.accept(this);
@@ -283,24 +312,28 @@ public class AstPrinter implements ASTVisitor<Void>{
     public Void visitCallExpr(Call expr) {
         if(!printExpressions) return null;
 
-        print("Call."+expr.funcIdentifier);
+        print("Expr.Call '" + expr.funcIdentifier + "'");
 
         indent++;
-        print("args:");
+
+        print("ARGS:");
+
         indent++;
         for(Expr e:expr.arguments){
             e.accept(this);
         }
         indent--;
+
         indent--;
 
         return null;
     }
 
 
+    
     @Override
     public Void visitVariableExpr(Variable expr) {
-        print("var " + expr.identifier);
+        print("Expr.Var '" + expr.identifier + "'");
         return null;
     }
 

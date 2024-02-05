@@ -6,7 +6,11 @@ import java.util.ArrayList;
 
 import token.*;
 import ast.*;
-
+import ast.Stmt;
+import ast.Decl.*;
+import ast.Stmt.*;
+import ast.Expr.*;
+import ast.Program.*;
 
 // The last element in the token list is of END_OF_LIST token. That way we can omit constantly checking
 // if there is more tokens left in the list. Instead, the END_OF_LIST token won't match any production and the
@@ -21,7 +25,7 @@ public class Parser {
     private boolean errorOccured;
 
 
-    public Program parseProgram(List<Token> tokens){
+    public Program parseProgram(List<Token> tokens) throws Exception{
         this.iter = new TokenIterator(tokens);
 
         errorOccured = false;
@@ -38,13 +42,12 @@ public class Parser {
                 varDeclarations.add(statement);
             }
             else{
-                System.out.println("Parser.parseProgram: An invalid declaration statement");
-                System.exit(0);
+                internalError("Parser.parseProgram: An invalid declaration statement");
             }
         }
 
         if(errorOccured){
-            return null;
+            throw new Exception();
         }
 
         return new Program(funcDeclarations,varDeclarations);
@@ -60,8 +63,8 @@ public class Parser {
         try{
             switch(iter.getToken().getType()){
                 case FN:
-                case TYPE_INT:
-                case TYPE_STR:
+                case INT:
+                case STRING:
                     return parseDeclStmt();
                 
                 case WHILE:
@@ -103,7 +106,7 @@ public class Parser {
         Decl declaration;
 
         Token token = iter.getToken();
-        if(token.getType() == TType.TYPE_INT || token.getType() == TType.TYPE_STR){
+        if(token.getType() == TType.INT || token.getType() == TType.STRING){
             declaration = parseVarDecl();
             forceMatch(TType.SEMICOLON);
         }
@@ -172,6 +175,8 @@ public class Parser {
     }
 
 
+
+
     private Stmt.If parseIfStmt(){
         int lineNumber = iter.getToken().getLineNumber();
 
@@ -223,7 +228,7 @@ public class Parser {
     private Decl.Var parseVarDecl(){
         int lineNumber = iter.getToken().getLineNumber();
 
-        forceMatch(TType.TYPE_INT,TType.TYPE_STR);
+        forceMatch(TType.INT,TType.STRING);
         ASTEnums type = toAstType(iter.getPrevToken().getType());
 
         forceMatch(TType.IDENTIFIER);
@@ -241,7 +246,7 @@ public class Parser {
     private Decl.Func parseFuncDecl(){
         int lineNumber = iter.getToken().getLineNumber();
 
-        forceMatch(TType.TYPE_INT,TType.TYPE_STR,TType.TYPE_VOID);
+        forceMatch(TType.INT,TType.STRING,TType.VOID);
         ASTEnums type = toAstType(iter.getPrevToken().getType());
 
         forceMatch(TType.IDENTIFIER);
@@ -273,7 +278,7 @@ public class Parser {
     private Decl.Param parseParamDecl(){
         int lineNumber = iter.getToken().getLineNumber();
 
-        forceMatch(TType.IDENTIFIER,TType.TYPE_INT,TType.TYPE_STR);
+        forceMatch(TType.IDENTIFIER,TType.INT,TType.STRING);
         ASTEnums type = toAstType(iter.getPrevToken().getType());
 
         forceMatch(TType.IDENTIFIER);
@@ -386,7 +391,7 @@ public class Parser {
         int lineNumber = iter.getToken().getLineNumber();
 
         // Literal value
-        if(match(TType.NUM_LITERAL,TType.STRING_LITERAL,TType.TRUE,TType.FALSE,TType.NULL)){
+        if(match(TType.NUM_LITERAL,TType.STRING_LITERAL)){
             String value = iter.getPrevToken().getString();
             ASTEnums type = toAstType(iter.getPrevToken().getType());
             return new Expr.Literal(value,type,lineNumber);
@@ -443,25 +448,25 @@ public class Parser {
     // Reports and throws an error if we cannot match, so that we can handle the unexpected token properly
     private void forceMatch(TType ... types){
         if(!match(types)){
-            errorOccured = true;
-            
+
             StringBuilder sb = new StringBuilder();
-            
+            sb.append("Unexpected token '");
+
             if(iter.getToken().getType() == TType.IDENTIFIER){
-                sb.append("Line " + iter.getToken().getLineNumber() +": Unexpected token '" + iter.getToken().getString() );
+                sb.append(iter.getToken().getString());
             }
             else{
-                sb.append("Line " + iter.getToken().getLineNumber() +": Unexpected token '" + iter.getToken().getType() );
+                sb.append(iter.getToken().getType() );
             }
             
-            sb.append(" . Expected tokens: ");
+            sb.append("' . Expected tokens: ");
 
             for(int i=0;i<types.length;i++){
                 sb.append(types[i]);
                 if(i != types.length - 1) sb.append(" or ");
             }
 
-            System.out.println(sb.toString());
+            error(sb.toString());
 
             throw new UnexpectedTokenException();
         }
@@ -494,8 +499,8 @@ public class Parser {
                 case FOR:
                 case RETURN:
                 case FN:
-                case TYPE_INT:
-                case TYPE_STR:
+                case INT:
+                case STRING:
                     return;
 
                 case SEMICOLON:
@@ -515,17 +520,17 @@ public class Parser {
 
 
 
-    private static ASTEnums toAstType(TType type){
+    private ASTEnums toAstType(TType type){
         switch (type) {
 
             // Data types
-            case TYPE_STR:
+            case STRING:
             case STRING_LITERAL:
                 return ASTEnums.STRING;
             case NUM_LITERAL:
-            case TYPE_INT:
+            case INT:
                 return ASTEnums.INT;
-            case TYPE_VOID:
+            case VOID:
                 return ASTEnums.VOID;
 
             // Operators
@@ -554,11 +559,20 @@ public class Parser {
             
 
             default:
-                System.out.println("Parser cannot translate " + type + " into any ASTEnums type");
-                System.exit(0);
+                internalError("Parser.toAstType: cannot translate " + type + " into any ASTEnums type");
                 return ASTEnums.UNDEFINED;
         }
     }
 
+
+    private void internalError(String message){
+        System.out.println("Internal error: " + message);
+        errorOccured = true;
+    }
+
+    private void error(String message){
+        System.out.println("Line " + iter.getToken().getLineNumber() +" : " + message);
+        errorOccured = true;
+    }
 
 }

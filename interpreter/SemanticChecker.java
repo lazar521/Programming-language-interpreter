@@ -7,15 +7,15 @@ import ast.Decl.*;
 import ast.Stmt.*;
 import interpreter.environment.Environment;
 import ast.Expr.*;
-
+import ast.Program;
 
 public class SemanticChecker implements ASTVisitor<Object>{
     private boolean ERROR_OCCURED;
-    private Environment environment;
+    private Environment env;
 
 
     public boolean checkSemantics(Program program){
-        environment = new Environment();
+        env = new Environment();
         ERROR_OCCURED = false;
         program.accept(this);
 
@@ -30,25 +30,25 @@ public class SemanticChecker implements ASTVisitor<Object>{
             stmt.accept(this);
         }
 
-        // First we declare all the functions before checking their semantics
+        // First we declare all the functions before checking them
         // We do this to make all functions visible to the whole program
         for(Stmt.DeclStmt declarationStatement : prog.funcDeclarations){
             Decl.Func funcDeclaration = (Decl.Func) declarationStatement.declaration;
             
-            // We also need to check function parameter semantics 
+            // We also need to check function parameters  
             for(Decl.Param param : funcDeclaration.params){
                 param.accept(this);
             }
 
-            if(environment.isFuncDeclared(funcDeclaration.identifier)){
+            if(env.isFuncDeclared(funcDeclaration.identifier)){
                 report(funcDeclaration.lineNumber,"Declaring a function with the same name twice " + funcDeclaration.identifier + "'");
             }
             else{
-                environment.declareFunction(funcDeclaration.identifier, funcDeclaration, funcDeclaration.type);
+                env.declareFunction(funcDeclaration.identifier, funcDeclaration, funcDeclaration.type);
             }
         }
 
-        if(!environment.isFuncDeclared("main")){
+        if(!env.isFuncDeclared("main")){
             report(0, "Cannot execute without main() functions");
         }
 
@@ -86,13 +86,13 @@ public class SemanticChecker implements ASTVisitor<Object>{
             report(whileStmt.lineNumber,"While statement condition expects type INT, but got " + whileStmt.condition.type);
         }
 
-        environment.enterCodeBlock();
+        env.enterCodeBlock();
 
         for(Stmt stmt: whileStmt.body){
             stmt.accept(this);
         }
 
-        environment.exitCodeBlock();
+        env.exitCodeBlock();
 
         return null;
     }
@@ -101,7 +101,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
     @Override
     public Object visitForStmt(For forStmt) {
-        environment.enterCodeBlock();
+        env.enterCodeBlock();
 
         if(forStmt.varDeclaration != null){
             forStmt.varDeclaration.accept(this);
@@ -122,7 +122,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
             stmt.accept(this);
         }
 
-        environment.exitCodeBlock();
+        env.exitCodeBlock();
         return null;
     }
 
@@ -136,20 +136,20 @@ public class SemanticChecker implements ASTVisitor<Object>{
             report(ifStmt.lineNumber,"If statement condition of wrong type. Expected INT, but got " + ifStmt.condition.type);
         }
 
-        environment.enterCodeBlock();
+        env.enterCodeBlock();
         for(Stmt stmt: ifStmt.body){
             stmt.accept(this);
         }
-        environment.exitCodeBlock();
+        env.exitCodeBlock();
 
 
         if(ifStmt.elseBody != null){
 
-            environment.enterCodeBlock();
+            env.enterCodeBlock();
             for(Stmt stmt: ifStmt.elseBody){
                 stmt.accept(this);
             }
-            environment.exitCodeBlock();
+            env.exitCodeBlock();
 
         }
 
@@ -162,7 +162,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
     public Object visitRetStmt(Ret retStmt) {
         retStmt.expr.accept(this);
 
-        Decl.Func function = environment.fetchCurrentFunction();
+        Decl.Func function = env.fetchCurrentFunction();
 
         if(retStmt.expr == null){
             if(function.type != ASTEnums.VOID){
@@ -187,11 +187,11 @@ public class SemanticChecker implements ASTVisitor<Object>{
             varDecl.type = ASTEnums.UNDEFINED;
         }
 
-        if(environment.isVarDeclaredLocally(varDecl.identifier)){
+        if(env.isVarDeclaredLocally(varDecl.identifier)){
             report(varDecl.lineNumber,"Declaring a variable with the same name in same code block '" + varDecl.identifier +"'");
         }
         else{
-            environment.declareVar(varDecl.identifier,varDecl.type);
+            env.declareVar(varDecl.identifier,varDecl.type);
         }
 
 
@@ -204,7 +204,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
    
             // This way we just tell the environment that a varible has been initialized. It doesn't matter which value we pass since we won't be using it
             // We are only performing semantic checks now.
-            environment.assignVar(varDecl.identifier, null);
+            env.assignVar(varDecl.identifier, null);
 
         }
 
@@ -216,19 +216,19 @@ public class SemanticChecker implements ASTVisitor<Object>{
     @Override
     public Object visitFuncDecl(Func funcNode) {
 
-        environment.enterFunction(funcNode.identifier);
+        env.enterFunction(funcNode.identifier);
         
         // Note that we have alredy checked param semantics of every function at the start of the semantic analisys process
         // So we don't need to do that here
         for(Param param:funcNode.params){
 
-            if(environment.isVarDeclared(param.identifier)){
+            if(env.isVarDeclared(param.identifier)){
                 report(funcNode.lineNumber,"Declaring two or more parameters with the same name '" + param.identifier +"'");
             }
             else{
                 // Here we're telling the environment that the parameters are declared and initialized inside the funciton body
-                environment.declareVar(param.identifier, param.type);
-                environment.assignVar(param.identifier, null);
+                env.declareVar(param.identifier, param.type);
+                env.assignVar(param.identifier, null);
             }
 
         }
@@ -237,7 +237,14 @@ public class SemanticChecker implements ASTVisitor<Object>{
             stmt.accept(this);
         }
 
-        environment.exitFunction();
+        if(funcNode.type != ASTEnums.VOID){
+            Stmt lastStatement = funcNode.body.get(funcNode.body.size()-1);
+            if( !(lastStatement instanceof Stmt.Ret) ){
+                report(funcNode.lineNumber, "Function of non void type should have a return statement at the end '" + funcNode.identifier + "'");
+            }
+        }
+
+        env.exitFunction();
 
         return null;
     }
@@ -315,10 +322,10 @@ public class SemanticChecker implements ASTVisitor<Object>{
     public Object visitAssignExpr(Assign assignment) {
         ASTEnums varType;
 
-        if(environment.isVarDeclared(assignment.identifier)){
-            varType = environment.fetchVarType(assignment.identifier);
+        if(env.isVarDeclared(assignment.identifier)){
+            varType = env.fetchVarType(assignment.identifier);
             // This way we just tell the environment that here the variable has been initialized or assigned to
-            environment.assignVar(assignment.identifier, null);
+            env.assignVar(assignment.identifier, null);
         }
         else{
             report(assignment.lineNumber,"Assigning to an undeclared variable '" + assignment.identifier + "'");
@@ -338,14 +345,14 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
     @Override
     public Object visitCallExpr(Call call) {
-        if(!environment.isFuncDeclared(call.funcIdentifier)){
+        if(!env.isFuncDeclared(call.funcIdentifier)){
             report(call.lineNumber,"Calling an undeclared function '" + call.funcIdentifier + "'");
             call.type = ASTEnums.UNDEFINED;
             return null;
         }
 
 
-        Decl.Func function = environment.fetchFunc(call.funcIdentifier);
+        Decl.Func function = env.fetchFunc(call.funcIdentifier);
         
         call.type = function.type;
 
@@ -371,10 +378,10 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
     @Override
     public Object visitVariableExpr(Variable variable) {
-        if(environment.isVarDeclared(variable.identifier)){
-            variable.type = environment.fetchVarType(variable.identifier);
+        if(env.isVarDeclared(variable.identifier)){
+            variable.type = env.fetchVarType(variable.identifier);
             
-            if(!environment.isVarInitialized(variable.identifier)){
+            if(!env.isVarInitialized(variable.identifier)){
                 report(variable.lineNumber, "Using an uninitialized variable '" + variable.identifier + "'");
             }
 

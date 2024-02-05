@@ -1,6 +1,6 @@
 package token;
 
-
+//
 public class Token {
     private String value;
     private TType TType;

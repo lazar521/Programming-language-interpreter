@@ -16,6 +16,13 @@ import interpreter.environment.Environment;
 public class Executor implements ASTVisitor<Object>{
     private Environment environment;
 
+
+
+    public void executeProgram(Program program){
+        program.accept(this);
+    }
+
+
     @Override
     public Object visitProgram(Program prog) {
         environment = new Environment();
@@ -40,14 +47,14 @@ public class Executor implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitExprStmt(ExprStmt exprStmt) {
+    public Object visitExprStmt(Stmt.ExprStmt exprStmt) {
         exprStmt.expr.accept(this);
         return null;
     }
 
 
     @Override
-    public Object visitDeclStmt(DeclStmt declStmt) {
+    public Object visitDeclStmt(Stmt.DeclStmt declStmt) {
         declStmt.declaration.accept(this);
         return null;
     }

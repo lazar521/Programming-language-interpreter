@@ -1,11 +1,13 @@
 -When parser encounters an error and it starts skipping tokens it can skip a '{' ,for example, and then cannot match '}' later
 
 
--Functions can be written without any return statement. Fix that    ===> IMPORTANT
 -Add break statement
-
+-Add debug mode !
+-Add builtin functions
+-Add test folder
 
 
 -Declarations cannot be done inside loops or they will be performed multiple times
 -Functions should not be nested inside other functions   
 -Global declarations cannot use function calls
+-Funcions of non void return type should always have a non nested return statement at the end of their body

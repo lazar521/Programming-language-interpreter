@@ -8,11 +8,10 @@ public enum TType {
     LEFT_PAREN,
     RIGHT_BRACE,
     LEFT_BRACE,
-    RIGHT_BRACKET,
-    LEFT_BRACKET,
     SEMICOLON,
-    DOT,
     COMMA,
+
+    // operators
     MINUS,
     PLUS,
     STAR,
@@ -25,6 +24,8 @@ public enum TType {
     LESS_EQUAL,
     GREATER,
     GREATER_EQUAL,
+
+    // literals and identifiers
     IDENTIFIER,
     NUM_LITERAL,
     STRING_LITERAL,
@@ -34,23 +35,11 @@ public enum TType {
     ELSE,
     WHILE,
     FOR,
-    CLASS,
-    fn,
-    NULL,
-    OR,
-    AND,
-    THIS,
-    SUPER,
     RETURN,
-    TRUE,
-    FALSE,
     FN,
-
-
-    // type specifiers
-    TYPE_VOID,
-    TYPE_STR,
-    TYPE_INT,
+    VOID,
+    STRING,
+    INT,
 
     EOF
 }
