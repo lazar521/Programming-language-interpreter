@@ -27,14 +27,14 @@ public class AstPrinter implements ASTVisitor<Void>{
     }
 
 
-    public  void printAST(Program program){
+    public  void printAST(Program program) throws Exception{
         program.accept(this);
     }
 
 
 
     @Override
-    public Void visitProgram(Program prog) {
+    public Void visitProgram(Program prog) throws Exception {
         System.out.println(horizontalLine);
         System.out.println("\n                      GLOBAL VARIABLES \n");
 
@@ -64,7 +64,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     //================== STATEMENTS ===================
 
     @Override
-    public Void visitExprStmt(Stmt.ExprStmt stmt) {
+    public Void visitExprStmt(Stmt.ExprStmt stmt) throws Exception {
         print("Stmt.Expr");
 
         indent++;
@@ -76,14 +76,14 @@ public class AstPrinter implements ASTVisitor<Void>{
 
 
     @Override
-    public Void visitDeclStmt(Stmt.DeclStmt stmt) {
+    public Void visitDeclStmt(Stmt.DeclStmt stmt) throws Exception {
         stmt.declaration.accept(this);
         return null;
     }
 
 
     @Override
-    public Void visitWhileStmt(Stmt.While stmt) {
+    public Void visitWhileStmt(Stmt.While stmt) throws Exception {
         print("Stmt.While");
 
         indent++;
@@ -108,7 +108,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     }
 
     @Override
-    public Void visitForStmt(Stmt.For stmt) {
+    public Void visitForStmt(Stmt.For stmt) throws Exception {
         print("Stmt.For");
         indent++;
 
@@ -146,7 +146,7 @@ public class AstPrinter implements ASTVisitor<Void>{
 
 
     @Override
-    public Void visitIfStmt(Stmt.If stmt) {
+    public Void visitIfStmt(Stmt.If stmt) throws Exception {
         print("Stmt.If");
 
         indent++;
@@ -181,7 +181,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     }
 
     @Override
-    public Void visitRetStmt(Stmt.Ret stmt) {
+    public Void visitRetStmt(Stmt.Ret stmt) throws Exception {
         print("Stmt.Ret");
 
         indent++;
@@ -197,7 +197,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     //===================== DECLARATIONS ====================
     
     @Override
-    public Void visitVarDecl(Decl.Var decl) {
+    public Void visitVarDecl(Decl.Var decl) throws Exception {
         print("Decl.Var '" + decl.identifier + "'");
 
         indent++;
@@ -217,7 +217,7 @@ public class AstPrinter implements ASTVisitor<Void>{
 
 
     @Override
-    public Void visitFuncDecl(Decl.Func decl) {
+    public Void visitFuncDecl(Decl.Func decl) throws Exception {
         print("Decl.Func '" + decl.identifier + "'");
 
         indent++;
@@ -255,7 +255,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     //==================== EXPRESSIONS ========================
 
     @Override
-    public Void visitBinaryExpr(Expr.Binary expr) {
+    public Void visitBinaryExpr(Expr.Binary expr) throws Exception {
         if(!printExpressions) return null;
 
         print(expr.operator+".binary");
@@ -269,7 +269,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     }
 
     @Override
-    public Void visitUnaryExpr(Expr.Unary expr) {
+    public Void visitUnaryExpr(Expr.Unary expr) throws Exception {
         if(!printExpressions) return null;
 
         print(expr.operator+".unary");
@@ -295,7 +295,7 @@ public class AstPrinter implements ASTVisitor<Void>{
 
 
     @Override
-    public Void visitAssignExpr(Assign assignment) {
+    public Void visitAssignExpr(Assign assignment) throws Exception {
         if(!printExpressions) return null;
 
         print("Expr.Assign '" + assignment.identifier +"'");
@@ -309,7 +309,7 @@ public class AstPrinter implements ASTVisitor<Void>{
 
 
     @Override
-    public Void visitCallExpr(Call expr) {
+    public Void visitCallExpr(Call expr) throws Exception {
         if(!printExpressions) return null;
 
         print("Expr.Call '" + expr.funcIdentifier + "'");

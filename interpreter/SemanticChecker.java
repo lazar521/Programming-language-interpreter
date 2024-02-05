@@ -14,18 +14,19 @@ public class SemanticChecker implements ASTVisitor<Object>{
     private Environment env;
 
 
-    public boolean checkSemantics(Program program){
+    public void checkSemantics(Program program) throws Exception{
         env = new Environment();
         ERROR_OCCURED = false;
+        
         program.accept(this);
 
-        return !ERROR_OCCURED;
+        if(ERROR_OCCURED) throw new Exception();
     }
 
 
 
     @Override
-    public Object visitProgram(Program prog) {
+    public Object visitProgram(Program prog) throws Exception {
         for(Stmt stmt:prog.varDeclarations){
             stmt.accept(this);
         }
@@ -41,7 +42,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
             }
 
             if(env.isFuncDeclared(funcDeclaration.identifier)){
-                report(funcDeclaration.lineNumber,"Declaring a function with the same name twice " + funcDeclaration.identifier + "'");
+                report(funcDeclaration.lineNumber,"Declaring a function with the same name twice '" + funcDeclaration.identifier + "' , ignoring the second one");
             }
             else{
                 env.declareFunction(funcDeclaration.identifier, funcDeclaration, funcDeclaration.type);
@@ -49,7 +50,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
         }
 
         if(!env.isFuncDeclared("main")){
-            report(0, "Cannot execute without main() functions");
+            report(0, "Cannot execute without main() function");
         }
 
         // Here we're checking function bodies
@@ -63,7 +64,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitExprStmt(ExprStmt exprStmt) {
+    public Object visitExprStmt(ExprStmt exprStmt) throws Exception {
         exprStmt.expr.accept(this);
         return null;
     }
@@ -71,7 +72,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitDeclStmt(DeclStmt declStmt) {
+    public Object visitDeclStmt(DeclStmt declStmt) throws Exception {
         declStmt.declaration.accept(this);
         return null;
     }
@@ -79,7 +80,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitWhileStmt(While whileStmt) {
+    public Object visitWhileStmt(While whileStmt) throws Exception {
         whileStmt.condition.accept(this);
 
         if(whileStmt.condition.type != ASTEnums.INT){
@@ -100,7 +101,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitForStmt(For forStmt) {
+    public Object visitForStmt(For forStmt) throws Exception {
         env.enterCodeBlock();
 
         if(forStmt.varDeclaration != null){
@@ -129,7 +130,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitIfStmt(If ifStmt) {
+    public Object visitIfStmt(If ifStmt) throws Exception {
         ifStmt.condition.accept(this);
 
         if(ifStmt.condition.type != ASTEnums.INT){
@@ -159,7 +160,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitRetStmt(Ret retStmt) {
+    public Object visitRetStmt(Ret retStmt) throws Exception {
         retStmt.expr.accept(this);
 
         Decl.Func function = env.fetchCurrentFunction();
@@ -181,7 +182,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitVarDecl(Decl.Var varDecl) { 
+    public Object visitVarDecl(Decl.Var varDecl) throws Exception { 
         if(varDecl.type == ASTEnums.VOID){
             report(varDecl.lineNumber,"Declaring a variable with type void '" + varDecl.identifier + "'");
             varDecl.type = ASTEnums.UNDEFINED;
@@ -214,16 +215,16 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitFuncDecl(Func funcNode) {
+    public Object visitFuncDecl(Func funcNode) throws Exception {
 
-        env.enterFunction(funcNode.identifier);
+        env.enterFunction(funcNode);
         
         // Note that we have alredy checked param semantics of every function at the start of the semantic analisys process
         // So we don't need to do that here
         for(Param param:funcNode.params){
 
             if(env.isVarDeclared(param.identifier)){
-                report(funcNode.lineNumber,"Declaring two or more parameters with the same name '" + param.identifier +"'");
+                report(funcNode.lineNumber,"Declaring two or more parameters with the same name '" + param.identifier +"' , ignoring the second one");
             }
             else{
                 // Here we're telling the environment that the parameters are declared and initialized inside the funciton body
@@ -240,7 +241,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
         if(funcNode.type != ASTEnums.VOID){
             Stmt lastStatement = funcNode.body.get(funcNode.body.size()-1);
             if( !(lastStatement instanceof Stmt.Ret) ){
-                report(funcNode.lineNumber, "Function of non void type should have a return statement at the end '" + funcNode.identifier + "'");
+                report(funcNode.lineNumber, "Function '" + funcNode.identifier +"' of type " + funcNode.type + " should have a return statement at the end");
             }
         }
 
@@ -263,7 +264,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitBinaryExpr(Expr.Binary binary) {
+    public Object visitBinaryExpr(Expr.Binary binary) throws Exception {
         binary.left.accept(this);
         binary.right.accept(this);
 
@@ -296,13 +297,15 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitUnaryExpr(Unary unary) {
+    public Object visitUnaryExpr(Unary unary) throws Exception {
         unary.expr.accept(this);
-        unary.type = unary.expr.type;
 
-        if(unary.type != ASTEnums.INT){
-            report(unary.lineNumber,"Unary expression: Applying operator " + unary.operator + " to an invalid type");
+        if(unary.expr.type != ASTEnums.INT){
+            report(unary.lineNumber,"Unary expression: Applying operator " + unary.operator + " to a " + unary.expr.type + " data type");
             unary.type = ASTEnums.UNDEFINED;
+        }
+        else{
+            unary.type = unary.expr.type;
         }
         
 
@@ -319,7 +322,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitAssignExpr(Assign assignment) {
+    public Object visitAssignExpr(Assign assignment) throws Exception {
         ASTEnums varType;
 
         if(env.isVarDeclared(assignment.identifier)){
@@ -338,13 +341,12 @@ public class SemanticChecker implements ASTVisitor<Object>{
             report(assignment.lineNumber,"Wrong type being assigned to '"+assignment.identifier+"' . Expected " + varType + " , but got " + assignment.expr.type);
         }
 
-
         return null;
     }
 
 
     @Override
-    public Object visitCallExpr(Call call) {
+    public Object visitCallExpr(Call call) throws Exception {
         if(!env.isFuncDeclared(call.funcIdentifier)){
             report(call.lineNumber,"Calling an undeclared function '" + call.funcIdentifier + "'");
             call.type = ASTEnums.UNDEFINED;
@@ -397,7 +399,7 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
 
     private void report(int lineNumber,String s){
-        ERROR_OCCURED = true;
         System.out.println("Line " + lineNumber +": " + s);
+        ERROR_OCCURED = true;
     }
 }

@@ -154,13 +154,12 @@ public class Interpreter {
             return;
         }
 
+        System.out.println("\nEXECUTING '" + fileName + "'");
         executeCode(code);
     }
 
 
     private void executeCode(String code){
-        System.out.println();
-
         try{
             Program ast = parser.parseProgram( lexer.makeTokens(code) );
 
@@ -168,9 +167,9 @@ public class Interpreter {
 
             System.out.println();
 
-            if (semanticChecker.checkSemantics(ast)){
-                executor.executeProgram(ast);
-            }
+            semanticChecker.checkSemantics(ast);
+            executor.executeProgram(ast);
+            
         }
         catch(Exception e){
             System.out.println("AN ERROR HAS OCCURED");

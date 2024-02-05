@@ -22,7 +22,7 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitBinaryExpr(this);
         }
     
@@ -41,7 +41,7 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitUnaryExpr(this);
         }
     }
@@ -59,7 +59,7 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitAssignExpr(this);
         }
     }
@@ -75,7 +75,7 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitLiteralExpr(this);
         }
     }
@@ -93,7 +93,7 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor){
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception{
             return visitor.visitCallExpr(this);
         }
 
@@ -111,7 +111,7 @@ public abstract class Expr implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitVariableExpr(this);
         }   
     }

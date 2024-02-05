@@ -2,9 +2,9 @@
 
 
 -Add break statement
+
 -Add debug mode !
 -Add builtin functions
--Add test folder
 
 
 -Declarations cannot be done inside loops or they will be performed multiple times

@@ -16,7 +16,7 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitExprStmt(this);
         }
     }
@@ -31,7 +31,7 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitDeclStmt(this);
         }
     }
@@ -48,7 +48,7 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitWhileStmt(this);
         }
     }
@@ -69,7 +69,7 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitForStmt(this);
         }
     }
@@ -89,7 +89,7 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitIfStmt(this);
         }
     }
@@ -105,7 +105,7 @@ public abstract class Stmt implements ASTNode{
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitRetStmt(this);
         }
     }

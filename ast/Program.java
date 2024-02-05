@@ -12,7 +12,7 @@ public class Program implements ASTNode {
     }
 
     @Override
-    public <T> T accept(ASTVisitor<T> visitor) {
+    public <T> T accept(ASTVisitor<T> visitor) throws Exception {
         return visitor.visitProgram(this);
     }
 

@@ -18,7 +18,7 @@ public abstract class Decl  implements ASTNode {
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitVarDecl(this);
         }
     }
@@ -39,7 +39,7 @@ public abstract class Decl  implements ASTNode {
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitFuncDecl(this);
         }
     }
@@ -56,7 +56,7 @@ public abstract class Decl  implements ASTNode {
         }
 
         @Override
-        public <T> T accept(ASTVisitor<T> visitor) {
+        public <T> T accept(ASTVisitor<T> visitor) throws Exception {
             return visitor.visitParamDecl(this);
         }
     }

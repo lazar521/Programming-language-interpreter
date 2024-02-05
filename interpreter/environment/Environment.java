@@ -12,11 +12,12 @@ import ast.ASTEnums;
 // It's SemanticChecker's job to inform the user 
 
 public class Environment{ 
-    DeclarationtTable functionTable;
-    DeclarationtTable globalScope;
-    DeclarationtTable localScope;
-    Stack<FunctionCall> callStack;
+    private DeclarationtTable functionTable;
+    private DeclarationtTable globalScope;
+    private DeclarationtTable localScope;
+    private Stack<FunctionCall> callStack;
 
+    private int MAX_CALLSTACK_SIZE = 100;
 
     public Environment(){
         this.functionTable = new DeclarationtTable();
@@ -30,7 +31,7 @@ public class Environment{
 
     public void declareFunction(String name,Decl.Func funcNode, ASTEnums returnType){
         if(functionTable.isDeclared(name)){
-            error("Environment.declareFunction: Declaring a function with the same name twice '" + name + "'");
+            internalError("declareFunction: Declaring a function with the same name twice '" + name + "'");
             return;
         }
 
@@ -41,7 +42,7 @@ public class Environment{
 
     public Decl.Func fetchFunc(String name){
         if(!functionTable.isDeclared(name)){
-            error("Environment.fetchFunc: Fetching an undeclared function '" + name + "'");
+            internalError("fetchFunc: Fetching an undeclared function '" + name + "'");
             return null;
         }
 
@@ -51,7 +52,7 @@ public class Environment{
 
     public ASTEnums getFuncReturnType(String name){
         if(!functionTable.isDeclared(name)){
-            error("Environment.getFuncReturnType: Checking the type of an undeclared function");
+            internalError("getFuncReturnType: Checking the type of an undeclared function");
             return ASTEnums.UNDEFINED;
 
         }
@@ -62,11 +63,11 @@ public class Environment{
 
     public Decl.Func fetchCurrentFunction(){
         if(callStack.empty()){
-            error("Environment.fetchCurrentFunction: Fetching current function, but the call stack is empty");
+            internalError("fetchCurrentFunction: Fetching current function, but the call stack is empty");
             return null;
         }
 
-        return fetchFunc(callStack.peek().name);
+        return callStack.peek().funcNode;
     }
 
 
@@ -83,7 +84,7 @@ public class Environment{
     public void declareVar(String name,ASTEnums type){
         if(callStack.empty()){
             if(globalScope.isDeclared(name)){
-                error("Environment.declareVar: Declaring a variable with the same name twice in global scope twice '" + name + "'");
+                internalError("declareVar: Declaring a variable with the same name twice in global scope twice '" + name + "'");
                 return;
             }
 
@@ -91,7 +92,7 @@ public class Environment{
         }
         else{
             if(localScope.isDeclaredInInnerScope(name)){
-                error("Environment.declareVar: Declaring a variable with the same name in the same code block '" + name + "'");
+                internalError("declareVar: Declaring a variable with the same name in the same code block '" + name + "'");
                 return;
             }
 
@@ -109,7 +110,7 @@ public class Environment{
             globalScope.assign(name, value);
         }
         else{
-            error("Environment.assignVar: Assigning to an undeclared variable '" + name + "'");
+            internalError("assignVar: Assigning to an undeclared variable '" + name + "'");
         }
     }
 
@@ -123,7 +124,7 @@ public class Environment{
             return globalScope.getType(name);
         }
 
-        error("Environment.fetchVarType: Fetching data type of an undeclared variable '" + name + "'");
+        internalError("fetchVarType: Fetching data type of an undeclared variable '" + name + "'");
         return ASTEnums.UNDEFINED;
     }
 
@@ -135,7 +136,7 @@ public class Environment{
                 return localScope.fetch(name);
             }
             else{
-                error("Environment.fetchVar: Fetching an uninitialized variable '" + name + "'");
+                internalError("fetchVar: Fetching an uninitialized variable '" + name + "'");
             }
         }
         
@@ -144,11 +145,11 @@ public class Environment{
                 return globalScope.fetch(name);
             }
             else{
-                error("Environment.fetchVar: Fetching an uninitialized variable '" + name + "'");
+                internalError("fetchVar: Fetching an uninitialized variable '" + name + "'");
             }
         }
 
-        error("Environment.fetchVar: Fetching an undeclared variable '" + name + "'");
+        internalError("fetchVar: Fetching an undeclared variable '" + name + "'");
         return null; 
     }
 
@@ -173,7 +174,7 @@ public class Environment{
             return globalScope.isInitialized(name);
         }
         
-        error("Environment.isVarInitialized: Checking initialization status of an undeclared variable");
+        internalError("isVarInitialized: Checking initialization status of an undeclared variable");
         return false;
     }
 
@@ -193,30 +194,34 @@ public class Environment{
 
     public void enterCodeBlock(){
         if(localScope == null){
-            error("Environment.enterCodeBlock: No active local scope");
+            internalError("enterCodeBlock: No active local scope");
         }
         localScope.enterBlockScope();
     }
 
     public void exitCodeBlock(){
         if(localScope == null){
-            error("Environment.exitCodeBlock: No active local scope");
+            internalError("exitCodeBlock: No active local scope");
         }
         localScope.exitBlockScope();
     }
 
 
-    public void enterFunction(String name){
-        if(callStack.size() == 100){
-            error("Maximum function call stack size of 100 reached. Exiting.");
+    public void enterFunction(Decl.Func funcNode){
+        if(callStack.size() == MAX_CALLSTACK_SIZE){
+            internalError("enterFunction: Maximum function call stack size of 100 reached. Exiting.");
         }
 
         localScope = new DeclarationtTable();
-        callStack.push(new FunctionCall(name,localScope));
+        callStack.push(new FunctionCall(funcNode,localScope));
     }
 
 
     public void exitFunction(){
+        if(callStack.empty()){
+            internalError("exitFunction: Exiting a function but call stack is empty");
+        }
+
         callStack.pop();
 
         if(callStack.empty()){
@@ -228,21 +233,25 @@ public class Environment{
     }
 
 
+    public boolean isMaxCallstackReached(){
+        return (callStack.size() == MAX_CALLSTACK_SIZE); 
+    }
 
 
-    public void error(String s){
-        System.out.println("Internal error: " + s);
+    public void internalError(String message){
+        System.out.println("Internal error: Environment." + message);
         System.exit(0);
     }
 
 
 
+
     private static class FunctionCall{
         public DeclarationtTable scope;
-        public String name;
+        public Decl.Func funcNode;
 
-        public FunctionCall(String name,DeclarationtTable scope){
-            this.name = name;
+        public FunctionCall(Decl.Func funcNode,DeclarationtTable scope){
+            this.funcNode = funcNode;
             this.scope = scope;
         }
     }

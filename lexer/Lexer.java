@@ -80,7 +80,7 @@ public Lexer(){}
                 default:
                     if(Character.isDigit(c)) tokenizeNumber();
                     else if (Character.isLetter(c) || c == '_') tokenizeIdentifier();
-                    else error("Unexpected character " + c);
+                    else report("Unexpected character " + c);
             }
 
         }
@@ -127,7 +127,7 @@ public Lexer(){}
             c = iter.getChar();
         }
 
-        if(!iter.hasCharacters() || iter.getChar() == '\n') error("String never terminated");
+        if(!iter.hasCharacters() || iter.getChar() == '\n') report("String never terminated");
 
         // skip the closing quotation mark
         iter.advance();
@@ -159,7 +159,7 @@ public Lexer(){}
         tokenList.add(new Token(value, TType,lineNumber));
     }
 
-    private void error(String message) throws Exception {
+    private void report(String message) throws Exception {
         System.out.println("Lexer: Line " + String.valueOf(lineNumber) + ": " + message);
         throw new Exception();
     }

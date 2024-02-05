@@ -7,10 +7,7 @@ import java.util.ArrayList;
 import token.*;
 import ast.*;
 import ast.Stmt;
-import ast.Decl.*;
-import ast.Stmt.*;
-import ast.Expr.*;
-import ast.Program.*;
+
 
 // The last element in the token list is of END_OF_LIST token. That way we can omit constantly checking
 // if there is more tokens left in the list. Instead, the END_OF_LIST token won't match any production and the
@@ -22,13 +19,13 @@ public class Parser {
     private static class UnexpectedTokenException extends RuntimeException{}
 
     private TokenIterator iter;
-    private boolean errorOccured;
+    private boolean ERROR_OCCURED;
 
 
     public Program parseProgram(List<Token> tokens) throws Exception{
         this.iter = new TokenIterator(tokens);
 
-        errorOccured = false;
+        ERROR_OCCURED = false;
         ArrayList<Stmt.DeclStmt> funcDeclarations = new ArrayList<Stmt.DeclStmt>();
         ArrayList<Stmt.DeclStmt>  varDeclarations = new ArrayList<Stmt.DeclStmt>();
 
@@ -42,11 +39,11 @@ public class Parser {
                 varDeclarations.add(statement);
             }
             else{
-                internalError("Parser.parseProgram: An invalid declaration statement");
+                internalError("parseProgram: An invalid declaration statement");
             }
         }
 
-        if(errorOccured){
+        if(ERROR_OCCURED){
             throw new Exception();
         }
 
@@ -466,7 +463,7 @@ public class Parser {
                 if(i != types.length - 1) sb.append(" or ");
             }
 
-            error(sb.toString());
+            report(sb.toString());
 
             throw new UnexpectedTokenException();
         }
@@ -559,20 +556,20 @@ public class Parser {
             
 
             default:
-                internalError("Parser.toAstType: cannot translate " + type + " into any ASTEnums type");
+                internalError("toAstType: cannot translate " + type + " into any ASTEnums type");
                 return ASTEnums.UNDEFINED;
         }
     }
 
 
     private void internalError(String message){
-        System.out.println("Internal error: " + message);
-        errorOccured = true;
+        System.out.println("Internal error: Parser." + message);
+        System.exit(0);
     }
 
-    private void error(String message){
+    private void report(String message){
         System.out.println("Line " + iter.getToken().getLineNumber() +" : " + message);
-        errorOccured = true;
+        ERROR_OCCURED = true;
     }
 
 }

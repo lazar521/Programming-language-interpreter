@@ -14,18 +14,27 @@ import ast.Stmt.*;
 import interpreter.environment.Environment;
 
 public class Executor implements ASTVisitor<Object>{
-    private Environment environment;
+    private Environment env;
 
 
 
-    public void executeProgram(Program program){
-        program.accept(this);
+    public void executeProgram(Program program) throws Exception{
+        Object value = program.accept(this);
+
+        if(value instanceof String){
+            System.out.println("The program returned: \"" + value + "\"");
+        }
+        else{
+            System.out.println("The program returned: " + value);
+        }
+
+        
     }
 
 
     @Override
-    public Object visitProgram(Program prog) {
-        environment = new Environment();
+    public Object visitProgram(Program prog) throws Exception {
+        env = new Environment();
 
         for(Stmt varDeclStmt: prog.varDeclarations){
             varDeclStmt.accept(this);
@@ -34,27 +43,27 @@ public class Executor implements ASTVisitor<Object>{
         for(Stmt.DeclStmt funcDeclStmt: prog.funcDeclarations){
             Decl.Func decl = (Decl.Func) funcDeclStmt.declaration;
 
-            environment.declareFunction(decl.identifier, decl, decl.type);
+            env.declareFunction(decl.identifier, decl, decl.type);
         }
 
         // TODO: make integrated functions
         
-        environment.enterFunction("main");
-        Decl.Func mainFunc = environment.fetchFunc("main");
+        Decl.Func mainFunc = env.fetchFunc("main");
+        env.enterFunction(mainFunc);
 
         return mainFunc.accept(this);
     }
 
 
     @Override
-    public Object visitExprStmt(Stmt.ExprStmt exprStmt) {
+    public Object visitExprStmt(Stmt.ExprStmt exprStmt) throws Exception {
         exprStmt.expr.accept(this);
         return null;
     }
 
 
     @Override
-    public Object visitDeclStmt(Stmt.DeclStmt declStmt) {
+    public Object visitDeclStmt(Stmt.DeclStmt declStmt) throws Exception {
         declStmt.declaration.accept(this);
         return null;
     }
@@ -62,8 +71,8 @@ public class Executor implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitWhileStmt(While whileStmt) {
-        environment.enterCodeBlock();
+    public Object visitWhileStmt(While whileStmt) throws Exception {
+        env.enterCodeBlock();
         
         while( (int) whileStmt.condition.accept(this) != 0){
             for(Stmt stmt: whileStmt.body){
@@ -71,19 +80,18 @@ public class Executor implements ASTVisitor<Object>{
             }
         }
 
-        environment.exitCodeBlock();
+        env.exitCodeBlock();
 
         return null;
     }
 
 
-    // TODO: For statement written like this expects all of the fields to be non null
     @Override
-    public Object visitForStmt(For forStmt) {
-        environment.enterCodeBlock();
+    public Object visitForStmt(For forStmt) throws Exception {
+        
+        env.enterCodeBlock();
 
         if(forStmt.varDeclaration != null) forStmt.varDeclaration.accept(this);
-
 
         while(true){
             if(forStmt.condition != null &&  ((int)forStmt.condition.accept(this) == 0) ){
@@ -97,16 +105,16 @@ public class Executor implements ASTVisitor<Object>{
             if(forStmt.update != null) forStmt.update.accept(this);
         }
 
-        environment.exitCodeBlock();
+        env.exitCodeBlock();
 
         return null;
     }
 
     @Override
-    public Object visitIfStmt(If ifStmt) {
+    public Object visitIfStmt(If ifStmt) throws Exception {
         int res = (int) ifStmt.condition.accept(this);
 
-        environment.enterCodeBlock();
+        env.enterCodeBlock();
         if(res != 0){
             for(Stmt stmt: ifStmt.body){
                 stmt.accept(this);
@@ -118,13 +126,13 @@ public class Executor implements ASTVisitor<Object>{
             }
         }
 
-        environment.exitCodeBlock();
+        env.exitCodeBlock();
  
         return null; 
     }
 
     @Override
-    public Object visitRetStmt(Ret retStmt) throws ReturnValueException{
+    public Object visitRetStmt(Ret retStmt) throws Exception{
         Object retVal = null;
         
         if(retStmt.expr != null){
@@ -136,11 +144,11 @@ public class Executor implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitVarDecl(Var decl) {
-        environment.declareVar(decl.identifier, decl.type);
+    public Object visitVarDecl(Var decl) throws Exception {
+        env.declareVar(decl.identifier, decl.type);
         
         if(decl.expr != null){
-            environment.assignVar(decl.identifier, decl.expr.accept(this));
+            env.assignVar(decl.identifier, decl.expr.accept(this));
         }
 
         return null;
@@ -148,7 +156,7 @@ public class Executor implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitFuncDecl(Func funcDeclaration) {
+    public Object visitFuncDecl(Func funcDeclaration) throws Exception {
         
         // First we execute the funciton body
         // When we encounter a return statement we throw an exception that holds the return value.
@@ -170,14 +178,14 @@ public class Executor implements ASTVisitor<Object>{
 
     @Override
     public Object visitParamDecl(Param decl) {
-        environment.declareVar(decl.identifier, decl.type);
+        env.declareVar(decl.identifier, decl.type);
         return null;
     }
 
 
 
     @Override
-    public Object visitBinaryExpr(Binary expr) {        
+    public Object visitBinaryExpr(Binary expr) throws Exception {        
         Object left = expr.left.accept(this);
         Object right = expr.right.accept(this);
 
@@ -223,7 +231,7 @@ public class Executor implements ASTVisitor<Object>{
     }
 
     @Override
-    public Object visitUnaryExpr(Unary unary) {
+    public Object visitUnaryExpr(Unary unary) throws Exception {
         int operand = (int) unary.expr.accept(this);
 
         switch(unary.operator){
@@ -258,10 +266,10 @@ public class Executor implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitAssignExpr(Assign assignment) {
+    public Object visitAssignExpr(Assign assignment) throws Exception {
         Object exprValue = assignment.expr.accept(this);
         
-        environment.assignVar(assignment.identifier, exprValue);
+        env.assignVar(assignment.identifier, exprValue);
 
         return exprValue;
     }
@@ -269,8 +277,12 @@ public class Executor implements ASTVisitor<Object>{
 
 
     @Override
-    public Object visitCallExpr(Call call) {
-        Decl.Func funcNode = environment.fetchFunc(call.funcIdentifier);
+    public Object visitCallExpr(Call call) throws Exception {
+        if(env.isMaxCallstackReached()){
+            runtimeError(call.lineNumber,"Cannot call function '" + call.funcIdentifier + "' . Maximum function call stack size reached ");
+        }
+
+        Decl.Func funcNode = env.fetchFunc(call.funcIdentifier);
 
         // Calculating argument expressions before entering new function scope
         ArrayList<Object> argValues = new ArrayList<>();
@@ -279,20 +291,20 @@ public class Executor implements ASTVisitor<Object>{
         }
 
         // Entering new scope and assigning parameters their respective values
-        environment.enterFunction(call.funcIdentifier);
+        env.enterFunction(funcNode);
         
         for(int i=0; i< funcNode.params.size();i++){
             Object argVal = argValues.get(i);    
             Param param = funcNode.params.get(i);
             
-            environment.declareVar(param.identifier, param.type);
-            environment.assignVar(param.identifier, argVal);
+            env.declareVar(param.identifier, param.type);
+            env.assignVar(param.identifier, argVal);
         }
         
         // Calling function body
         Object retVal = funcNode.accept(this);
         
-        environment.exitFunction();
+        env.exitFunction();
         
         return retVal;
     }
@@ -302,7 +314,7 @@ public class Executor implements ASTVisitor<Object>{
 
     @Override
     public Object visitVariableExpr(Variable variable) {
-        return environment.fetchVar(variable.identifier);
+        return env.fetchVar(variable.identifier);
     }
 
 
@@ -319,9 +331,14 @@ public class Executor implements ASTVisitor<Object>{
 
 
 
-    private static void error(String s){
-        System.out.println("Internal error: " + s);
+    private static void error(String message){
+        System.out.println("Internal error: " + message);
         System.exit(0);
+    }
+
+    private static void runtimeError(int lineNumber,String message) throws Exception{
+        System.out.println("Line " + lineNumber +": Runtime error: " + message);
+        throw new Exception();
     }
 
 
