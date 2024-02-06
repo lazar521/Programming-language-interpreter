@@ -6,13 +6,13 @@ import java.util.Scanner;
 import lexer.Lexer;
 import parser.Parser;
 import ast.Program;
-import interpreter.Executor;
-import interpreter.SemanticChecker;
-import interpreter.AstPrinter;
+import interpreter.modules.AstPrinter;
+import interpreter.modules.Executor;
+import interpreter.modules.SemanticChecker;
 
 
 
-public class Dub {    
+public class InterpreterCLI {    
     private AstPrinter astPrinter;
     private Executor executor;
     private SemanticChecker semanticChecker;
@@ -25,7 +25,7 @@ public class Dub {
 
     private static String horizontalLine = "=====================================================================";
 
-    public Dub(){
+    public InterpreterCLI(){
         astPrinter = new AstPrinter();
         executor = new Executor();
         semanticChecker = new SemanticChecker();
@@ -38,7 +38,7 @@ public class Dub {
 
 
     public static void main(String[] args) {
-        Dub interpreter = new Dub();
+        InterpreterCLI interpreter = new InterpreterCLI();
         interpreter.start();
 
     }
@@ -167,22 +167,29 @@ public class Dub {
     // Here's the workflow of our interpreter
 
     private void executeCode(String code){
+        int phase = 0;
+        
         try{
             Program ast = parser.parseProgram( lexer.makeTokens(code) );
-
-            if(printAST) astPrinter.printAST(ast);
+            
+            if(printAST) {
+                phase = 1;
+                astPrinter.printAST(ast);
+            }
 
             System.out.println();
 
+            phase = 2;
             semanticChecker.checkSemantics(ast);
 
+            phase = 3;
             Object value = executor.executeProgram(ast);;
 
             if(value instanceof String) System.out.println("\nFinished: The program returned: \"" + value + "\"");
             else System.out.println("\nFinished: The program returned " + value);
         }
         catch(Exception e){
-            System.out.println("\nAN ERROR HAS OCCURED");
+            errorInfo(phase);
         }
 
     }
@@ -205,5 +212,26 @@ public class Dub {
 
 
     
+    private void errorInfo(int phase){
+        switch (phase) {
+            case 0:
+                System.out.println("A parsing or lexing error has occured");
+                break;
+            
+            case 1:
+                System.out.println("An error during AST printing has occured");
+                break;
+            
+            case 2:
+                System.out.println("An error during semantic analysis has occured");
+                break;
+
+            case 3:
+                System.out.println("A runtime error has occured during code execution");
+
+            default:
+                break;
+        }
+    }
     
 }

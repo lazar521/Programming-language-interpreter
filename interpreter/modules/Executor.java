@@ -1,4 +1,4 @@
-package interpreter;
+package interpreter.modules;
 
 import java.util.ArrayList;
 
@@ -128,6 +128,9 @@ public class Executor implements ASTVisitor<Object>{
         return null; 
     }
 
+
+    // Functions can have multiple return statements and the control flow could go multiple ways
+    // We return a value by wrapping it inside a runtime error
     @Override
     public Object visitRetStmt(Ret retStmt) throws Exception{
         Object retVal = null;
@@ -159,6 +162,7 @@ public class Executor implements ASTVisitor<Object>{
         // When we encounter a return statement we throw an exception that holds the return value.
         // We catch it here and extract the return value. If exception is not thrown, 
         // then the function's return type is void so it doesn't matter what we return 
+        // Functions can have multiple return statements and the control flow could go multiple ways
         try{
             for(Stmt stmt: funcDeclaration.body){
                 stmt.accept(this);
@@ -323,17 +327,10 @@ public class Executor implements ASTVisitor<Object>{
 
 
 
-    private static class ReturnValueException extends RuntimeException{
-        private Object value;
-
-        public ReturnValueException(Object value){
-            this.value = value;
-        }
+    private int boolToInt(boolean bool){
+        if(bool) return 1;
+        return 0;
     }
-
-
-
-
 
 
 
@@ -348,8 +345,18 @@ public class Executor implements ASTVisitor<Object>{
     }
 
 
-    private int boolToInt(boolean bool){
-        if(bool) return 1;
-        return 0;
+
+    private static class ReturnValueException extends RuntimeException{
+        private Object value;
+
+        public ReturnValueException(Object value){
+            this.value = value;
+        }
     }
+
+
+
+
+
+
 }

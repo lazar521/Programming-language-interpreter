@@ -1,4 +1,5 @@
 
+// testing our interpreter's semantic error detection capabilities
 
 string s = "global variable";
 
@@ -6,12 +7,21 @@ string s = "global variable";
 fn int fun(int someParam){
     for(int x="nope"; x<3; x=x+1){
 
-        if(x == 3){
-            int inner = 2 + strReturner("invalid arg type");
-        }
+
+        int m;
     }
 
+    if(x == 3){
+        int b = 2 + strReturner("invalid arg type");
+        int inner = 2;
+    }
     inner = 3;
+
+
+    fn int nestedFunc(){
+        return 1;
+    }
+
 }
 
 

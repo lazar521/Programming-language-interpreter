@@ -7,14 +7,17 @@ import ast.Decl;
 import ast.ASTEnums;
 
 
+// Environment class acts like a fascade for the DeclarationTable
+// The job of the Environemnt class is to keep track of funciton and variable declarations. It also keeps track of of the function call stack
 
-// The error messages from Environment module are intended for the programmer, not the user.
-// It's SemanticChecker's job to inform the user 
+// Environment should NOT perform any error checks. It is up to the user of the class to use it properly. 
+// For example, if we try to call fetchFunc for a function name that has not yet been declared we throw an internal error, signaling that
+// the Environment class has not been used properly
 
 public class Environment{ 
     private DeclarationtTable functionTable;
     private DeclarationtTable globalScope;
-    private DeclarationtTable localScope;
+    private DeclarationtTable activeLocalSCope;
     private Stack<FunctionCall> callStack;
 
     private int MAX_CALLSTACK_SIZE = 100;
@@ -22,7 +25,7 @@ public class Environment{
     public Environment(){
         this.functionTable = new DeclarationtTable();
         this.globalScope = new DeclarationtTable();
-        this.localScope = null;
+        this.activeLocalSCope = null;
         this.callStack = new Stack<>();
     }
 
@@ -91,20 +94,20 @@ public class Environment{
             globalScope.declare(name, type);
         }
         else{
-            if(localScope.isDeclaredInInnerScope(name)){
+            if(activeLocalSCope.isDeclaredInInnerScope(name)){
                 internalError("declareVar: Declaring a variable with the same name in the same code block '" + name + "'");
                 return;
             }
 
-            localScope.declare(name, type);
+            activeLocalSCope.declare(name, type);
         }
         
     }
 
 
     public void assignVar(String name,Object value){
-        if(localScope != null && localScope.isDeclared(name)){
-            localScope.assign(name,value);
+        if(activeLocalSCope != null && activeLocalSCope.isDeclared(name)){
+            activeLocalSCope.assign(name,value);
         }
         else if(globalScope.isDeclared(name)){
             globalScope.assign(name, value);
@@ -116,8 +119,8 @@ public class Environment{
 
 
     public ASTEnums fetchVarType(String name){
-        if(localScope!= null && localScope.isDeclared(name)){
-            return localScope.getType(name);
+        if(activeLocalSCope!= null && activeLocalSCope.isDeclared(name)){
+            return activeLocalSCope.getType(name);
         }
         
         if(globalScope.isDeclared(name)){
@@ -131,9 +134,9 @@ public class Environment{
 
 
     public Object fetchVar(String name){
-        if(localScope != null && localScope.isDeclared(name)){
-            if(localScope.isInitialized(name)){
-                return localScope.fetch(name);
+        if(activeLocalSCope != null && activeLocalSCope.isDeclared(name)){
+            if(activeLocalSCope.isInitialized(name)){
+                return activeLocalSCope.fetch(name);
             }
             else{
                 internalError("fetchVar: Fetching an uninitialized variable '" + name + "'");
@@ -155,7 +158,7 @@ public class Environment{
 
 
     public boolean isVarDeclared(String name){
-        if(localScope != null && localScope.isDeclared(name)){
+        if(activeLocalSCope != null && activeLocalSCope.isDeclared(name)){
             return true;
         }
         else if(globalScope.isDeclared(name)){
@@ -167,8 +170,8 @@ public class Environment{
 
 
     public boolean isVarInitialized(String name){
-        if(localScope != null && localScope.isDeclared(name)){
-            return localScope.isInitialized(name);
+        if(activeLocalSCope != null && activeLocalSCope.isDeclared(name)){
+            return activeLocalSCope.isInitialized(name);
         }
         else if(globalScope.isDeclared(name)){
             return globalScope.isInitialized(name);
@@ -179,13 +182,14 @@ public class Environment{
     }
 
 
-    public boolean isVarDeclaredLocally(String name){
+    // We check if a variable has alredy been declared in the current innermost block scope
+    public boolean isVarDeclaredInCurrentBlock(String name){
         if(callStack.empty()){
             // Global scope doesn't have nested block scopes inside it. 
             return globalScope.isDeclared(name);
         }
         else{
-            return localScope.isDeclaredInInnerScope(name);
+            return activeLocalSCope.isDeclaredInInnerScope(name);
         }
     }
 
@@ -193,27 +197,30 @@ public class Environment{
     // These functions are used for manipulating scopes. 
 
     public void enterCodeBlock(){
-        if(localScope == null){
+        if(activeLocalSCope == null){
             internalError("enterCodeBlock: No active local scope");
         }
-        localScope.enterBlockScope();
+        activeLocalSCope.enterBlockScope();
     }
 
     public void exitCodeBlock(){
-        if(localScope == null){
+        if(activeLocalSCope == null){
             internalError("exitCodeBlock: No active local scope");
         }
-        localScope.exitBlockScope();
+        activeLocalSCope.exitBlockScope();
     }
 
 
+
+
+    // When we enter a funciton we want to save the previous function's declaration table on the stack and create a new one
     public void enterFunction(Decl.Func funcNode){
         if(callStack.size() == MAX_CALLSTACK_SIZE){
             internalError("enterFunction: Maximum function call stack size of 100 reached. Exiting.");
         }
 
-        localScope = new DeclarationtTable();
-        callStack.push(new FunctionCall(funcNode,localScope));
+        activeLocalSCope = new DeclarationtTable();
+        callStack.push(new FunctionCall(funcNode,activeLocalSCope));
     }
 
 
@@ -225,14 +232,15 @@ public class Environment{
         callStack.pop();
 
         if(callStack.empty()){
-            localScope = null;
+            activeLocalSCope = null;
         }
         else{
-            localScope = callStack.peek().scope;
+            activeLocalSCope = callStack.peek().scope;
         }
     }
 
-
+    
+    // Checks if the limit for the call stack depth has been reached
     public boolean isMaxCallstackReached(){
         return (callStack.size() == MAX_CALLSTACK_SIZE); 
     }

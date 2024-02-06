@@ -1,5 +1,34 @@
-This document only shows what parser considers 'right' syntax. It only helps to keep track of how the parser works.
-Keep in mind that not every production accepted by the parser will also be accepted by the semantic checker
+This document only shows what the parser considers the 'right' syntax. It only helps to keep track of how the parser works.
+Keep in mind that the semantic checker also imposes some rules that would be too complicated to represent formally in this specification.
+
+Here are some rules imposed by the semantic checker:
+    1. The program must contation 'main' funciton . It can return any type of data (int,string or void) and cannot have parameters
+    2. We cannot declare nested functions
+    3. We cannot declare variables inside loops
+    4. We cannot declare same variable or function name in the same block scope
+    5. Non-void type functions must have a return statement at the end that returns a value
+    6. We must use appropriate data types with appropriate operators
+    7. The interpreter provides a few built-in functions and their function names are reserved
+    8. Function calls must be performed with appropriate number of arguments and argument types
+    9. Function calls cannot be used outside of any function (For example, we can't declare global variables like this ==>  int x = funcCall(); )
+
+
+Runtime errors:
+    1. Maximum function call stack is limited to 100 function calls (This is defined in the Environment module)
+    2. Inputting a string after calling readInt() will crash the program
+    
+
+
+Built-in function signatures:
+    1. fn void print(string s)
+    2. fn int readInt()
+    3. fn string readStr()
+    4. fn string intToStr(int x)
+
+
+
+
+PRODUCTION RULES FOR THE PARSER MODULE:
 
 // PROGRAM
 program -> declStmt*
@@ -16,9 +45,9 @@ retStmt -> 'return' expression? ';'
 
 
 // DECLARATIONS
-varDecl -> typeSpecifier identifier ( '=' expression )? 
-funcDecl -> typeSpecifier identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
-param -> typeSpecifier identifier 
+varDecl -> (int | string) identifier ( '=' expression )? 
+funcDecl -> (int | string | void) identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
+param -> (int | string) identifier 
 
 
 // EXPRESSIONS

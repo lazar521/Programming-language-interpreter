@@ -7,10 +7,14 @@ import ast.ASTEnums;
 import ast.Decl;
 
 
-// If we want to add a new built-in function we don't just need to add it here in this file
+// If we want to add a new built-in function we just need to modify this file, no need to touch anything else
 
 public class BuiltIns {
     
+
+    // We want to create fake nodes for every built-in funciton to trick the SemanticChecker and the Executor into working with these
+    // nodes like they would with any other. The only place where we handle these fake nodes differently is when executing the Expr.Call node in the Executor class 
+
     public static void declareBuiltIns(Environment env) throws Exception{
         if(env == null){
             internalError("declareBuiltIns: Environment is null");
@@ -20,7 +24,7 @@ public class BuiltIns {
                 
         // Making fake print(string message) function node
         parameters = new ArrayList<>();
-        parameters.add(new Decl.Param(ASTEnums.STRING, "message" , 0));
+        parameters.add(new Decl.Param(ASTEnums.STRING, "s" , 0));
         Decl.Func printFunc = new Decl.Func(ASTEnums.VOID, "print", parameters, null, 0);
         
         // Making fake readStr() function node
@@ -46,29 +50,8 @@ public class BuiltIns {
     }
 
 
-    public static void print(String s){
-        System.out.println(s);
-    }
 
-    // Here the Java compiler is complaining that we should call sc.close() at the end of the function 
-    // But when we do that it throws some runtime errors
-    public static String readStr(){
-        Scanner sc = new Scanner(System.in);
-        String str =  sc.nextLine();
-        return str;
-    }
-
-    public static int readInt(){
-        Scanner sc = new Scanner( System.in );
-        int x = sc.nextInt();
-        return x;
-    }
-
-
-    public static String intToStr(int x){
-        return Integer.toString(x);
-    }
-
+    // Checks if the given function is a built-in
 
     public static boolean isFuncBuiltIn(String funcName){
         switch (funcName) {
@@ -84,8 +67,12 @@ public class BuiltIns {
     }
 
 
+    // An interface used to execute all of the built-in functions
+
     public static Object executeFunction(String funcIdentifier, ArrayList<Object> arguments){
+        
         switch (funcIdentifier) {
+            
             case "print":
                 if(arguments.size() != 1) internalError("executeFunction: Calling 'print' with wrong number of arguments");
                 print((String) arguments.get(0));
@@ -109,6 +96,36 @@ public class BuiltIns {
             }
 
     }
+
+
+
+
+    // Implementations for built-in functions 
+
+    private static void print(String s){
+        System.out.println(s);
+    }
+
+    // Here the Java compiler is complaining that we should call sc.close() at the end of the function 
+    // But when we do that it throws some runtime errors and crashes the program for some reason
+    private static String readStr(){
+        Scanner sc = new Scanner(System.in);
+        String str =  sc.nextLine();
+        return str;
+    }
+
+    private static int readInt(){
+        Scanner sc = new Scanner( System.in );
+        int x = sc.nextInt();
+        return x;
+    }
+
+
+    private static String intToStr(int x){
+        return Integer.toString(x);
+    }
+
+
 
 
     private static void internalError(String message){

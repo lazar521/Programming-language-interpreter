@@ -260,7 +260,8 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // varDecl -> typeSpecifier identifier ( '=' expression )? 
+    // varDecl -> (int | string) identifier ( '=' expression )? 
+
 
     private Decl.Var parseVarDecl(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -281,7 +282,7 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // funcDecl -> typeSpecifier identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
+    // funcDecl -> (int | string | void) identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
 
     private Decl.Func parseFuncDecl(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -316,12 +317,12 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // param -> typeSpecifier identifier 
+    // param -> (int | string) identifier 
 
     private Decl.Param parseParamDecl(){
         int lineNumber = iter.getToken().getLineNumber();
 
-        forceMatch(TType.IDENTIFIER,TType.INT,TType.STRING);
+        forceMatch(TType.INT,TType.STRING);
         ASTEnums type = toAstType(iter.getPrevToken().getType());
 
         forceMatch(TType.IDENTIFIER);

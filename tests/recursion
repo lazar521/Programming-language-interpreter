@@ -1,15 +1,16 @@
 int counter = 0;
 
 
-fn string main(){
+fn int main(){
     string hello = "Hello ";
     print(hello + strReturner(""));
-    return "finished :)";
+    print ("finished :)");
+    return 1;
 }
 
 fn string strReturner(string y){
     counter = counter + 1;
-    if(counter == 60){
+    if(counter >= 60){
         return y;
     }
     return strReturner(y + " Hi");

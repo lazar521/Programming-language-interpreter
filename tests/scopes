@@ -1,0 +1,27 @@
+// A test to show how scopes work in our interpreter 
+
+int x = 99999;
+
+
+fn void main(){
+    int x = -1;
+    
+    x();        // a function call
+
+    print("X from main() => " + intToStr(x));
+}
+
+
+fn void x(){
+
+    for(int x=0; x<5 ; x=x+1){
+        print("X inside loop => " + intToStr(x) );
+    }
+
+    if(x){
+        int x = 50;
+        print("X from IF => " + intToStr(x));
+    }
+
+    print("Global X => " + intToStr(x));
+} 

@@ -8,16 +8,21 @@ import ast.ASTEnums;
 
 
 
-// This class only provides basic functionalities and doesn't do any error checking or recovery
-// All of that will be for the user to handle
+// This class only provides basic functionalities and doesn't perform any error checking 
+// All of that will be for the user of the class to handle
 
 
 public class DeclarationtTable {
+
+    // We nest block scopes. Every entry in the nameTable is a stack of variables that have that name.
+    // Variable at the top of the stack shadows the ones below it. That way we allow the redeclaration of
+    // a variable but in different level of block nesting 
     private HashMap< String, Stack<Variable> > nameTable; 
     private int nestingLevel;
- 
+    
     // Block scopes can be nested inside each other. We use the stack to keep track of those scopes.
-    // Each value in the stack is a list of names declared in that particular scope.
+    // Each value in the stack is a list of names declared in that particular scope
+    // When we leave a particular block scope we "undeclare" the variables declared there
     private Stack< LinkedList<String> > cleanupTracker;
 
     
@@ -43,7 +48,7 @@ public class DeclarationtTable {
 
         stack.push(new Variable(type,nestingLevel));
 
-        // We keep track of variables declared in the current block scope so we can remove later when exiting the block
+        // We keep track of variables declared in the current block scope so we can remove their declaration later when exiting the block
         cleanupTracker.peek().add(name);
     }
 
@@ -85,13 +90,14 @@ public class DeclarationtTable {
 
 
     // If we enter new block scope, we can redeclare a variable. That way we shadow the outer variable with the same name
+    // 'nestingLevel' variable keeps track of the number of block scopes we're currently inside of, since block scopes can be nested
     public void enterBlockScope(){
         nestingLevel++;
         cleanupTracker.push(new LinkedList<>());
     }
 
 
-    // When exiting a block scope we throw away all the variables that were declared in that scope
+    // When exiting a block scope we pop all the variables that were declared in that block  
     public void exitBlockScope(){
         nestingLevel--;
         

@@ -1,4 +1,4 @@
-package interpreter;
+package interpreter.modules;
 
 import ast.*;
 import ast.ASTEnums;
@@ -18,7 +18,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     private boolean printExpressions = true;
 
   
-    // We print the given strung indented by some value
+    // We print the given string indented by some amount
     private void print(String s){
         StringBuilder sb = new StringBuilder();
         
@@ -45,6 +45,7 @@ public class AstPrinter implements ASTVisitor<Void>{
         System.out.println(horizontalLine);
         System.out.println("\n                      GLOBAL VARIABLES \n");
 
+        // First, we print all the global variable declarations
         for(Stmt s:prog.varDeclStatements){
             s.accept(this);
             System.out.println(horizontalLine);
@@ -54,6 +55,7 @@ public class AstPrinter implements ASTVisitor<Void>{
        
         System.out.println("\n                         FUNCTIONS\n");
        
+        // Here we're printing the function declarations 
         for(Stmt s:prog.funcDeclStatements){
             s.accept(this);
             System.out.println(horizontalLine);
@@ -278,9 +280,11 @@ public class AstPrinter implements ASTVisitor<Void>{
         if(!printExpressions) return null;
 
         print(expr.operator+".unary");
+
         indent++;
         expr.expr.accept(this);
         indent--;
+        
         return null;
     }
 
