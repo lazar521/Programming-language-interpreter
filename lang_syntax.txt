@@ -1,17 +1,15 @@
 This document only shows what parser considers 'right' syntax. It only helps to keep track of how the parser works.
 Keep in mind that not every production accepted by the parser will also be accepted by the semantic checker
 
-
 // PROGRAM
 program -> declStmt*
 
 
 // STATEMENTS
-stmt -> exprStmt | assignStmt | declStmt | whileStmt | forStmt | ifStmt | retStmt 
+stmt -> exprStmt | declStmt | whileStmt | forStmt | ifStmt | retStmt 
 exprStmt -> expression ';'                                                      
 declStmt -> ( varDecl ';' | 'fn' funcDecl  )                             
 whileStmt -> 'while' '(' expression ')' '{' stmt* '}'
-breakStmt -> break ;
 forStmt -> for '(' varDecl? ';' expression? ';' expression? ')' '{' stmt* '}'
 ifStmt -> 'if' '(' expr ')' '{' stmt* '}'  
 retStmt -> 'return' expression? ';'
@@ -25,14 +23,14 @@ param -> typeSpecifier identifier
 
 // EXPRESSIONS
 expression -> assignment 
-assignment -> (identifier '=') equality                 
+assignment -> (identifier '=')? equality                 
 equality -> comparison ( equality_operator comparison )*
+comparison -> addition ( comparison_operator comparison )*
 addition -> multiplication ( addition_operator multiplication )*
 multiplication -> term ( multiplication_operator term )*
 term -> unary_operator? primary
 primary- > identifier
-         | literal |
+         | literal 
          | '(' equality ')'
          | identifier '(' identifier (',' identifier)* ')'
-literal -> NUM_LITERAL | STRING_LITERAL
 

@@ -1,13 +1,24 @@
 package interpreter;
 
-
-
 import ast.*;
 import ast.Decl.*;
 import ast.Stmt.*;
 import interpreter.environment.Environment;
+import interpreter.environment.BuiltIns;
 import ast.Expr.*;
 import ast.Program;
+
+
+
+// TODO: finish documenttion
+// We visit every node in the AST to check if it is semantically correct. When we pass our AST to the Executor class it can just execute 
+// every node without worrying if, for example, we're trying to multiply an int with a string.
+// We also 
+
+// Every Decl and Expr node has a 'type' field. 
+// Some nodes, like Expr.Literal, alredy have this field assigned to in their constructors, while other nodes, like Expr.Binary, don't
+// Nodes like Expr.Binary need to find out the types of their operands to deduce their own and assign a value 
+
 
 public class SemanticChecker implements ASTVisitor<Object>{
     private boolean ERROR_OCCURED;
@@ -27,20 +38,28 @@ public class SemanticChecker implements ASTVisitor<Object>{
 
     @Override
     public Object visitProgram(Program prog) throws Exception {
-        for(Stmt stmt:prog.varDeclarations){
+
+        // First we visit all of global variable declarations
+        // We check their semantics first so that we can declare them rightaway and make them visible to every function in the program
+        for(Stmt stmt:prog.varDeclStatements){
             stmt.accept(this);
         }
 
-        // First we declare all the functions before checking them
-        // We do this to make all functions visible to the whole program
-        for(Stmt.DeclStmt declarationStatement : prog.funcDeclarations){
+        // Now we need to declare all the functions to make them visible to the whole program
+        // For now we're just checking their parameter's semantics and declaring them. We're not checking function bodies here
+        // We start with built-in funcitons
+        BuiltIns.declareBuiltIns(env);
+
+        // Then we declare the rest of the functions in the program 
+        for(Stmt.DeclStmt declarationStatement : prog.funcDeclStatements){
             Decl.Func funcDeclaration = (Decl.Func) declarationStatement.declaration;
             
-            // We also need to check function parameters  
+            // Checking semantics of function parameters
             for(Decl.Param param : funcDeclaration.params){
                 param.accept(this);
             }
 
+            // If a function with the same name has alredy been declared we need to report that. If not then we just declare our function.
             if(env.isFuncDeclared(funcDeclaration.identifier)){
                 report(funcDeclaration.lineNumber,"Declaring a function with the same name twice '" + funcDeclaration.identifier + "' , ignoring the second one");
             }
@@ -49,13 +68,14 @@ public class SemanticChecker implements ASTVisitor<Object>{
             }
         }
 
+        // Check if main() function is present
         if(!env.isFuncDeclared("main")){
             report(0, "Cannot execute without main() function");
         }
 
-        // Here we're checking function bodies
-        for(Stmt stmt:prog.funcDeclarations){
-            stmt.accept(this);
+        // Now we're analyzing the body of each function
+        for(Stmt funcDeclStmt:prog.funcDeclStatements){
+            funcDeclStmt.accept(this);
         }
         
         return null;
@@ -276,19 +296,26 @@ public class SemanticChecker implements ASTVisitor<Object>{
         
         // If both operands are of type STRING, we need to check if we're using 
         // permitted operations for the STRING data type
-        binary.type = binary.left.type;
-        if(binary.type == ASTEnums.STRING){
+        
+        if(binary.left.type == ASTEnums.STRING){
            
             switch (binary.operator) {
                 case PLUS:
+                    binary.type = ASTEnums.STRING;
+                    break;
+
                 case EQUAL:
                 case NOT_EQUAL:
-                    break;  // We're OK
+                    binary.type = ASTEnums.INT;
+                    break;  
 
                 default:
                     report(binary.lineNumber,"Binary expression: Applying invalid operation " + binary.operator + " to STRING data type");
                     binary.type = ASTEnums.UNDEFINED;
             }
+        }
+        else{
+            binary.type = binary.left.type;
         }
 
         return null;

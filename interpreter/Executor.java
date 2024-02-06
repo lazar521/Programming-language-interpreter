@@ -12,41 +12,36 @@ import ast.Program;
 import ast.Stmt;
 import ast.Stmt.*;
 import interpreter.environment.Environment;
-
+import interpreter.environment.BuiltIns;
 
 public class Executor implements ASTVisitor<Object>{
     private Environment env;
 
 
-    public void executeProgram(Program program) throws Exception{
-        Object value = program.accept(this);
-
-        if(value instanceof String){
-            System.out.println("The program returned: \"" + value + "\"");
-        }
-        else{
-            System.out.println("The program returned: " + value);
-        }
-
+    public Object executeProgram(Program program) throws Exception{
+        env = new Environment();        
         
+        return program.accept(this);
     }
 
 
     @Override
     public Object visitProgram(Program prog) throws Exception {
-        env = new Environment();
 
-        for(Stmt varDeclStmt: prog.varDeclarations){
+        for(Stmt varDeclStmt: prog.varDeclStatements){
             varDeclStmt.accept(this);
         }
 
-        for(Stmt.DeclStmt funcDeclStmt: prog.funcDeclarations){
+        // Declaring built-in functions
+        BuiltIns.declareBuiltIns(env);
+
+        // Declaring the rest of the functions
+        for(Stmt.DeclStmt funcDeclStmt: prog.funcDeclStatements){
             Decl.Func decl = (Decl.Func) funcDeclStmt.declaration;
 
             env.declareFunction(decl.identifier, decl, decl.type);
         }
 
-        // TODO: make integrated functions
         
         Decl.Func mainFunc = env.fetchFunc("main");
         env.enterFunction(mainFunc);
@@ -205,15 +200,15 @@ public class Executor implements ASTVisitor<Object>{
                 return (int)left - (int)right;
            
             case PLUS:
-                if(expr.type == ASTEnums.STRING) return (String)left + (String)right;
+                if(expr.left.type == ASTEnums.STRING) return (String)left + (String)right;
                 else return (int)left + (int)right;
             
             case EQUAL:
-                if(expr.type == ASTEnums.STRING) return boolToInt( ((String)left).equals((String)right) );
+                if(expr.left.type == ASTEnums.STRING) return boolToInt( ((String)left).equals((String)right) );
                 else return boolToInt( (int)left == (int) right );
             
             case NOT_EQUAL:
-                if(expr.type == ASTEnums.STRING) return boolToInt( !((String)left).equals((String)right) );
+                if(expr.left.type == ASTEnums.STRING) return boolToInt( !((String)left).equals((String)right) );
                 else return boolToInt( !((int)left == (int) right) );
                 
             case LESS:
@@ -282,17 +277,24 @@ public class Executor implements ASTVisitor<Object>{
             runtimeError(call.lineNumber,"Cannot call function '" + call.funcIdentifier + "' . Maximum function call stack size reached ");
         }
 
-        Decl.Func funcNode = env.fetchFunc(call.funcIdentifier);
-
         // Calculating argument expressions before entering new function scope
         ArrayList<Object> argValues = new ArrayList<>();
         for(Expr arg:call.arguments){
             argValues.add(arg.accept(this));
         }
 
-        // Entering new scope and assigning parameters their respective values
+        // If the function is a built-in function then we call a predefined routine
+        if(BuiltIns.isFuncBuiltIn(call.funcIdentifier)){
+            return BuiltIns.executeFunction(call.funcIdentifier,argValues);
+        }
+
+        
+        Decl.Func funcNode = env.fetchFunc(call.funcIdentifier);
+
+        // Declaring new function scope 
         env.enterFunction(funcNode);
         
+        // Assigning passed values to parameters
         for(int i=0; i< funcNode.params.size();i++){
             Object argVal = argValues.get(i);    
             Param param = funcNode.params.get(i);
@@ -304,6 +306,7 @@ public class Executor implements ASTVisitor<Object>{
         // Calling function body
         Object retVal = funcNode.accept(this);
         
+        // 
         env.exitFunction();
         
         return retVal;

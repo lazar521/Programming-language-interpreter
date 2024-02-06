@@ -5,8 +5,7 @@ import java.util.ListIterator;
 import token.*;
 
 
-// With ListIterator we cannot get current element without advancing to the next one in the list with the ListIterator.next() method
-// We want to be able to get current element in the list without advancing to the next one so we make a wrapper class
+// We just define a custom iterator that can peek at previous, current and next element in the list
 
 class TokenIterator{
     private ListIterator<Token> iter;
@@ -14,15 +13,8 @@ class TokenIterator{
     private Token prev;
 
     TokenIterator(List<Token> tokens){
-        if(tokens.size() == 0 ){
-            System.out.println("\n\n ERROR: Making iterator on an empty list");
-            System.exit(-1);
-        }
-        
         this.iter = tokens.listIterator();
         
-        // iter.next() automatically advances to the next element in the list
-        // which we don't want to in the constructor, so we call iter.previous()
         prev = null;
         curr = iter.next();         
     }
@@ -35,8 +27,7 @@ class TokenIterator{
 
     public void advance(){
         if(!hasTokens()){
-            System.out.println("\n\n ERROR: Iterator cannot advance anymore");
-            System.exit(-1);
+            internalError("advance: Iterator cannot advance anymore");
         }
         prev = curr;
         curr = iter.next();
@@ -47,13 +38,22 @@ class TokenIterator{
     }
 
     public Token getPrevToken(){
+
         return prev;
     }
 
     public Token getNextToken(){
+        if(!hasTokens()){
+            internalError("getNextToken: No more tokens");
+        }
         Token t = iter.next();
         iter.previous();
         return t;
+    }
+
+
+    private static void internalError(String message){
+        System.out.println("Internal error: TokenIterator." + message);
     }
 
 }

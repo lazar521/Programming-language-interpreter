@@ -7,6 +7,10 @@ import ast.Expr.Call;
 import ast.Expr.Variable;
 
 
+// Here we perform recursive inorder print of every tree node.
+// Every incrementation of the 'indent' variable will have it's corresponding decrementation in the same function
+
+
 public class AstPrinter implements ASTVisitor<Void>{
     private static String horizontalLine = "_____________________________________________________________________";
 
@@ -14,6 +18,7 @@ public class AstPrinter implements ASTVisitor<Void>{
     private boolean printExpressions = true;
 
   
+    // We print the given strung indented by some value
     private void print(String s){
         StringBuilder sb = new StringBuilder();
         
@@ -36,9 +41,11 @@ public class AstPrinter implements ASTVisitor<Void>{
     @Override
     public Void visitProgram(Program prog) throws Exception {
         System.out.println(horizontalLine);
+        System.out.println("                  PRINTING ABSTRACT SYNTAX TREE");
+        System.out.println(horizontalLine);
         System.out.println("\n                      GLOBAL VARIABLES \n");
 
-        for(Stmt s:prog.varDeclarations){
+        for(Stmt s:prog.varDeclStatements){
             s.accept(this);
             System.out.println(horizontalLine);
         }
@@ -47,7 +54,7 @@ public class AstPrinter implements ASTVisitor<Void>{
        
         System.out.println("\n                         FUNCTIONS\n");
        
-        for(Stmt s:prog.funcDeclarations){
+        for(Stmt s:prog.funcDeclStatements){
             s.accept(this);
             System.out.println(horizontalLine);
 
@@ -55,8 +62,6 @@ public class AstPrinter implements ASTVisitor<Void>{
 
         return null;
     }
-
-
 
 
 
@@ -165,9 +170,9 @@ public class AstPrinter implements ASTVisitor<Void>{
         }
         indent--;
         
-        print("ELSE:");
 
         if(stmt.elseBody != null){
+            print("ELSE:");
             indent++;
             for(Stmt s: stmt.elseBody){
                 s.accept(this);

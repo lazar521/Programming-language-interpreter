@@ -3,12 +3,12 @@ package ast;
 import java.util.List;
 
 public class Program implements ASTNode {
-    public List<Stmt.DeclStmt> funcDeclarations;
-    public List<Stmt.DeclStmt> varDeclarations;
+    public List<Stmt.DeclStmt> funcDeclStatements;
+    public List<Stmt.DeclStmt> varDeclStatements;
 
     public Program(List<Stmt.DeclStmt> funcDeclarations,List<Stmt.DeclStmt> varDeclarations){
-        this.funcDeclarations = funcDeclarations;
-        this.varDeclarations = varDeclarations;
+        this.funcDeclStatements = funcDeclarations;
+        this.varDeclStatements = varDeclarations;
     }
 
     @Override

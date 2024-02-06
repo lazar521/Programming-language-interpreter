@@ -3,9 +3,9 @@ package ast;
 import java.util.List;
 
 public abstract class Expr implements ASTNode{
-    // This is a field that every Expr subtype will have.
-    // Its purpose is to help us perform semantic analysis
-    // We won't be assigning it rightaway, but in SemanticChecker class
+    // Purpose of the 'type' field is to help us during semantic analysis
+    // Not every node will have that field set in their constructors (meaning some will have the UNDEFINED as the default type)
+    // But every Expr node will have to have it set by the end of the semantic analisys
     public ASTEnums type = ASTEnums.UNDEFINED;
     public int lineNumber;
 

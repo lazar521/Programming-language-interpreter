@@ -1,0 +1,22 @@
+
+
+string s = "global variable";
+
+
+fn int fun(int someParam){
+    for(int x="nope"; x<3; x=x+1){
+
+        if(x == 3){
+            int inner = 2 + strReturner("invalid arg type");
+        }
+    }
+
+    inner = 3;
+}
+
+
+
+
+fn string strReturner(int x){
+    return 1;
+}

@@ -1,13 +1,14 @@
 package token;
 
-//
 public class Token {
-    private String value;
+    
+    // Only tokens of type IDENTIFIER, STRING_LITERAL and NUM_LITERAL will have the 'string' field set. Other tokens don't need it
+    private String string;
     private TType TType;
     private int lineNumber;
 
     public Token(String value, TType TType, int lineNumber){
-        this.value = value;
+        this.string = value;
         this.TType = TType;
         this.lineNumber = lineNumber;
     }
@@ -17,7 +18,7 @@ public class Token {
     }
 
     public String getString(){
-        return value;
+        return string;
     }
 
     public int getLineNumber(){
@@ -26,11 +27,11 @@ public class Token {
 
     @Override
     public String toString() {
-        if(value == null){
+        if(string == null){
             return TType.name();
         }
         else{
-            return value + "  " + TType.name();
+            return string + "  " + TType.name();
         }
     }
 }

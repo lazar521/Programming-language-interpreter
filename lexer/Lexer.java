@@ -19,6 +19,9 @@ public Lexer(){}
 
         tokenzieText();
 
+        // Adding this EOF token at the end makes it easier to write clean code for the Parser class
+        // Parser won't have to constantly check if it has reached the end of Token list. Instead it will encounter this EOF token
+        // that automatically won't match any production rule
         addToken(TType.EOF);
         return tokenList;
     }
@@ -151,14 +154,21 @@ public Lexer(){}
         return false;
     }
 
+
+
+    // We overload 'addToken' function to make the code more readable
+
     private void addToken(TType TType){
         addToken(null, TType);
     }
 
-    private void addToken(String value, TType TType){
-        tokenList.add(new Token(value, TType,lineNumber));
+    // Only tokens of type IDENTIFIER, STRING_LITERAL and NUM_LITERAL will call this one
+    private void addToken(String string, TType TType){
+        tokenList.add(new Token(string, TType,lineNumber));
     }
 
+    
+    
     private void report(String message) throws Exception {
         System.out.println("Lexer: Line " + String.valueOf(lineNumber) + ": " + message);
         throw new Exception();

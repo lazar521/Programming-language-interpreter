@@ -1,0 +1,46 @@
+
+
+fn int fib(int n)
+{
+    if (n <= 1){
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+ 
+fn int main()
+{
+    int running = 1;
+    int res;
+    string input;
+    int spin;
+
+    while(running){
+        print("Enter a number: ");
+        res = fib(readInt());
+        print("Result is: " + intToStr(res));
+
+        spin = 1;
+        while(spin){
+            print("Do you want to continue? yes/no");
+            input = readStr();
+            spin = 0;
+
+            if(input == "no"){
+                running = 0;
+            }
+            else{
+
+                if(input == "yes"){
+                    print("continuing!");
+                }
+                else{
+                    print("incorrect input");
+                    spin = 1;
+                }
+            }
+        }
+    }
+
+    return 1;
+}

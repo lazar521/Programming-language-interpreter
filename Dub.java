@@ -1,5 +1,5 @@
 import java.io.File;
-import java.io.FileNotFoundException;  
+import java.io.FileNotFoundException;
 import java.util.Scanner; 
 
 
@@ -10,7 +10,9 @@ import interpreter.Executor;
 import interpreter.SemanticChecker;
 import interpreter.AstPrinter;
 
-public class Interpreter {    
+
+
+public class Dub {    
     private AstPrinter astPrinter;
     private Executor executor;
     private SemanticChecker semanticChecker;
@@ -18,47 +20,53 @@ public class Interpreter {
     private Parser parser;
 
     private boolean printAST;
-    private boolean debugMode;
     private boolean running;
     private String testFolder = "tests";
 
-    public Interpreter(){
+    private static String horizontalLine = "=====================================================================";
+
+    public Dub(){
         astPrinter = new AstPrinter();
         executor = new Executor();
         semanticChecker = new SemanticChecker();
         lexer = new Lexer();
         parser = new Parser();
         printAST = false;
-        debugMode = false;
         running = true;
     }
 
 
 
     public static void main(String[] args) {
-        Interpreter interpreter = new Interpreter();
+        Dub interpreter = new Dub();
         interpreter.start();
 
     }
 
 
+    // Loop for inputting user commands
+
     private void start() {
         System.out.println("\nUse 'help' to show available commands");
-        Scanner scanner = new Scanner(System.in);  
-        
+        Scanner scanner = new Scanner(System.in);
+        String command;
+
         while(running){
             System.out.printf("enter command: ");
-
-            String command = scanner.nextLine(); 
+            
+            command = scanner.nextLine();
 
             executeCommand(command);
-            System.out.println("=====================================================================");
+
+            System.out.println(horizontalLine);
         }
 
         scanner.close();
     }
 
 
+
+    // Definition of CLI commands
 
     public void executeCommand(String cmd){
         if(cmd.length() == 0) return;
@@ -68,8 +76,7 @@ public class Interpreter {
         if(words.length == 1){
             switch(words[0]){
                 case "help":
-                    System.out.println("print on/off         ==>  Whether to print abstract syntax tree after parsing or not");
-                    System.out.println("debug on/off         ==>  Turns on or off interactive debug mode");
+                    System.out.println("print on/off         ==>  Whether to print the abstract syntax tree after parsing or not");
                     System.out.println("run [FILE_NAME]      ==>  It looks for the file in the 'tests' folder and runs it");
                     System.out.println("run tests            ==>  Runs all the files from the 'tests' folder");
                     System.out.println("conf                 ==>  Shows current configuration");
@@ -78,7 +85,6 @@ public class Interpreter {
                 
                 case "conf":
                     System.out.println("print: " + printAST);
-                    System.out.println("debug: " + debugMode);
                     break;
 
                 case "exit":
@@ -97,12 +103,6 @@ public class Interpreter {
                     if(words[1].equals("on")) printAST = true;
                     else if(words[1].equals("off")) printAST = false;
                     else System.out.println("Invalid print mode. You can do 'print on' or 'print off'");
-                    break;
-
-                case "debug":    
-                    if(words[1].equals("on")) debugMode = true;
-                    else if(words[1].equals("off")) debugMode = false;
-                    else System.out.println("Invalid debug mode. You can do 'debug on' or 'debug off'");
                     break;
 
                 case "run":
@@ -124,6 +124,8 @@ public class Interpreter {
 
 
 
+    // Runs all files in the 'tests' folder
+
     private void runTests(){
         File folder =  new File( System.getProperty("user.dir") + File.separator + testFolder );
         
@@ -139,10 +141,13 @@ public class Interpreter {
         }
 
         for(File file: files){
+            System.out.println(horizontalLine);
             runFile(file.getName());
         }
     }
 
+
+    // Runs a specific file
 
     private void runFile(String fileName){
         String code;
@@ -154,10 +159,12 @@ public class Interpreter {
             return;
         }
 
-        System.out.println("\nEXECUTING '" + fileName + "'");
+        System.out.println("\nRUNNING '" + fileName + "'");
         executeCode(code);
     }
 
+
+    // Here's the workflow of our interpreter
 
     private void executeCode(String code){
         try{
@@ -168,15 +175,20 @@ public class Interpreter {
             System.out.println();
 
             semanticChecker.checkSemantics(ast);
-            executor.executeProgram(ast);
-            
+
+            Object value = executor.executeProgram(ast);;
+
+            if(value instanceof String) System.out.println("\nFinished: The program returned: \"" + value + "\"");
+            else System.out.println("\nFinished: The program returned " + value);
         }
         catch(Exception e){
-            System.out.println("AN ERROR HAS OCCURED");
+            System.out.println("\nAN ERROR HAS OCCURED");
         }
 
     }
 
+
+    // Returns the contents of a file
 
     private String loadFile(String path) throws FileNotFoundException {
         File file = new File(path);

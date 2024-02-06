@@ -1,13 +1,14 @@
--When parser encounters an error and it starts skipping tokens it can skip a '{' ,for example, and then cannot match '}' later
+
+TODO:
+    -Comment on Executor, SemanticChecker classes and the whole environment package 
+    -Maybe make a UML diagram
+    -Write a more detailed documentation on github
+    -Don't upload todo.txt and .git file to GitHub  
 
 
--Add break statement
+Dub's limitations:
 
--Add debug mode !
--Add builtin functions
-
-
--Declarations cannot be done inside loops or they will be performed multiple times
--Functions should not be nested inside other functions   
--Global declarations cannot use function calls
--Funcions of non void return type should always have a non nested return statement at the end of their body
+    -Declarations cannot be done inside loops or they will be performed multiple times
+    -Functions should not be nested inside other functions   
+    -Global declarations cannot use function calls
+    -Funcions of non void return type should always have a non nested return statement at the end of their body

@@ -6,13 +6,12 @@ import java.util.ArrayList;
 
 import token.*;
 import ast.*;
-import ast.Stmt;
 
 
-// The last element in the token list is of END_OF_LIST token. That way we can omit constantly checking
-// if there is more tokens left in the list. Instead, the END_OF_LIST token won't match any production and the
-// error will be handled like any other syntax error rule
+// The last element in the token list is of EOF token. We don't have to constantly check if we've reached the end of the token list
+// Instead, the EOF token won't match any production rule and the error will be automaticlly handled like any other
 
+// Every parsing function in the Parser class corresponds to exactly one production rule from the language syntax specification
 
 public class Parser {
 
@@ -20,27 +19,40 @@ public class Parser {
 
     private TokenIterator iter;
     private boolean ERROR_OCCURED;
+    
 
+
+    // PRODUCTION RULE:
+    // program -> declStmt*
 
     public Program parseProgram(List<Token> tokens) throws Exception{
+        if(tokens.size() == 0) throw new Exception();
+        
         this.iter = new TokenIterator(tokens);
 
         ERROR_OCCURED = false;
+
+        // funcDeclarations is a list of all function declaration statements
         ArrayList<Stmt.DeclStmt> funcDeclarations = new ArrayList<Stmt.DeclStmt>();
+        // varDeclarations is list of all variable declaration statements that aren't inside any code block. Those are considered to be global variables
         ArrayList<Stmt.DeclStmt>  varDeclarations = new ArrayList<Stmt.DeclStmt>();
 
-        while(iter.hasTokens()){            
-            Stmt.DeclStmt statement = parseDeclStmt();
+        while(iter.hasTokens()){
+            // Try to parse a declaration statement
+            // If we encounter an unexpected token, we throw UnexpectedTokenException and catch it here so that we can handle it properly
+            try{            
+                Stmt.DeclStmt statement = parseDeclStmt();
 
-            if(statement.declaration instanceof Decl.Func){
-                funcDeclarations.add(statement);
+                // We separate function declarations statements from variable declaration statements 
+                if(statement.declaration instanceof Decl.Func) funcDeclarations.add(statement);
+                else if(statement.declaration instanceof Decl.Var) varDeclarations.add(statement);
+                else internalError("parseProgram: An invalid declaration statement");
+                
             }
-            else if(statement.declaration instanceof Decl.Var){
-                varDeclarations.add(statement);
+            catch(UnexpectedTokenException e){
+                synchronize();
             }
-            else{
-                internalError("parseProgram: An invalid declaration statement");
-            }
+
         }
 
         if(ERROR_OCCURED){
@@ -53,10 +65,17 @@ public class Parser {
 
 
 
+    
     //=============== STATEMENTS =====================
+
+
+    // PRODUCTION RULE:
+    // stmt -> exprStmt | declStmt | whileStmt | forStmt | ifStmt | retStmt 
 
     public Stmt parseStmt(){
         
+        // Try to parse a statement
+        // If we encounter an unexpected token, we throw UnexpectedTokenException and catch it here so that we can handle it properly
         try{
             switch(iter.getToken().getType()){
                 case FN:
@@ -87,6 +106,9 @@ public class Parser {
     }
 
 
+    // PRODUCTION RULE:
+    // exprStmt -> expression ';'                                                      
+
     private Stmt parseExprStmt(){
         Expr expr;
         int lineNumber = iter.getToken().getLineNumber();
@@ -97,6 +119,9 @@ public class Parser {
         return new Stmt.ExprStmt(expr,lineNumber);
     }
 
+
+    // PRODUCTION RULE:
+    // declStmt -> ( varDecl ';' | 'fn' funcDecl  )                             
 
     private Stmt.DeclStmt parseDeclStmt(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -115,6 +140,9 @@ public class Parser {
         return new Stmt.DeclStmt(declaration,lineNumber);
     }
 
+
+    // PRODUCTION RULE:
+    // whileStmt -> 'while' '(' expression ')' '{' stmt* '}'
 
     private Stmt.While parseWhileStmt(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -135,6 +163,9 @@ public class Parser {
         return new Stmt.While(condition, statements,lineNumber);
     }
 
+
+    // PRODUCTION RULE:
+    // forStmt -> for '(' varDecl? ';' expression? ';' expression? ')' '{' stmt* '}'
 
     private Stmt.For parseForStmt(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -173,6 +204,8 @@ public class Parser {
 
 
 
+    // PRODUCTION RULE:
+    // ifStmt -> 'if' '(' expr ')' '{' stmt* '}'  
 
     private Stmt.If parseIfStmt(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -202,6 +235,9 @@ public class Parser {
     }
 
 
+    // PRODUCTION RULE:
+    // retStmt -> 'return' expression? ';'
+
     private Stmt.Ret parseRetStmt(){
         int lineNumber = iter.getToken().getLineNumber();
 
@@ -222,6 +258,10 @@ public class Parser {
     
     //============= DECLARATIONS ===================
 
+
+    // PRODUCTION RULE:
+    // varDecl -> typeSpecifier identifier ( '=' expression )? 
+
     private Decl.Var parseVarDecl(){
         int lineNumber = iter.getToken().getLineNumber();
 
@@ -239,6 +279,9 @@ public class Parser {
         return new Decl.Var(type,identifier,expr,lineNumber);
     }
 
+
+    // PRODUCTION RULE:
+    // funcDecl -> typeSpecifier identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
 
     private Decl.Func parseFuncDecl(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -272,6 +315,9 @@ public class Parser {
     }
 
 
+    // PRODUCTION RULE:
+    // param -> typeSpecifier identifier 
+
     private Decl.Param parseParamDecl(){
         int lineNumber = iter.getToken().getLineNumber();
 
@@ -291,16 +337,21 @@ public class Parser {
     //============= EXPRESSIONS ===============
 
 
+    // PRODUCTION RULE:
+    // expression -> assignment 
+
     public Expr parseExpr(){
         return parseAssign();
     }
 
 
+    // PRODUCTION RULE:
+    // assignment -> (identifier '=')? equality                 
+
     public Expr parseAssign(){
         int lineNumber = iter.getToken().getLineNumber();
 
-
-        if(iter.getNextToken().getType() == TType.EQUAL){
+        if(iter.hasTokens() && iter.getNextToken().getType() == TType.EQUAL){
             forceMatch(TType.IDENTIFIER);
             String identifier = iter.getPrevToken().getString();
             forceMatch(TType.EQUAL);
@@ -314,6 +365,9 @@ public class Parser {
 
     }
 
+
+    // PRODUCTION RULE:
+    // equality -> comparison ( equality_operator comparison )*
 
     private Expr parseEquality(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -329,6 +383,9 @@ public class Parser {
     }
 
 
+    // PRODUCTION RULE:
+    // comparison -> addition ( comparison_operator comparison )*
+
     private Expr parseComparison(){
         int lineNumber = iter.getToken().getLineNumber();
         Expr expr = parseAddition();
@@ -342,6 +399,9 @@ public class Parser {
         return expr;
     }
 
+
+    // PRODUCTION RULE:
+    // addition -> multiplication ( addition_operator multiplication )*
 
     private Expr parseAddition(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -357,6 +417,8 @@ public class Parser {
     }
 
 
+    // PRODUCTION RULE:
+    // multiplication -> term ( multiplication_operator term )*
 
     private Expr parseMultiplication(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -372,6 +434,9 @@ public class Parser {
     }
 
 
+    // PRODUCTION RULE:
+    // term -> unary_operator? primary
+
     private Expr parseTerm(){
         int lineNumber = iter.getToken().getLineNumber();
 
@@ -384,6 +449,12 @@ public class Parser {
     }
 
     
+    // PRODUCTION RULE:
+    // primary- > identifier
+    //          | literal 
+    //          | '(' equality ')'
+    //          | identifier '(' identifier (',' identifier)* ')'
+
     private Expr parsePrimary(){
         int lineNumber = iter.getToken().getLineNumber();
 
@@ -429,6 +500,9 @@ public class Parser {
 
     //================ UTLITY =====================
 
+
+    // Checks if the current token matches any of the given types
+
     private boolean match(TType ... types){
         TType currTokenType = iter.getToken().getType();
 
@@ -437,24 +511,22 @@ public class Parser {
                 iter.advance();
                 return true;
             }
+
         }
         return false;
     }
 
 
-    // Reports and throws an error if we cannot match, so that we can handle the unexpected token properly
+    // Reports and throws an UnexpectedTokenError error if we cannot match 
     private void forceMatch(TType ... types){
         if(!match(types)){
 
+            // Construct a message to inform the user of what tokens were expected 
             StringBuilder sb = new StringBuilder();
             sb.append("Unexpected token '");
 
-            if(iter.getToken().getType() == TType.IDENTIFIER){
-                sb.append(iter.getToken().getString());
-            }
-            else{
-                sb.append(iter.getToken().getType() );
-            }
+            if(iter.getToken().getType() == TType.IDENTIFIER) sb.append(iter.getToken().getString());
+            else sb.append(iter.getToken().getType() );
             
             sb.append("' . Expected tokens: ");
 
@@ -472,8 +544,10 @@ public class Parser {
 
     // If we get a syntax error, we stop parsing that particular statement altogether and continue  
     // parsing the next one. We achieve this by skipping tokens until we reach one that matches the
-    // start of some statement rule. That way we can report more than one parsing errors and also avoid
-    // detecting cascade of false error detections caused by a bad token in a statement.
+    // start of some statement production rule. That way we can report more than one parsing errors
+    // Number of possible syntax error combinations is infinite so it is really hard for any method (incluiding this one) 
+    // to always work effectively and not report a cascade of false errors after encountering the first one
+
     private void synchronize(){
         iter.advance();
 
@@ -486,7 +560,6 @@ public class Parser {
             default:
                 break;
         }
-
 
         while(iter.hasTokens()){
             
@@ -515,7 +588,9 @@ public class Parser {
     }
 
 
-
+    // We translate every TokenType enum to its corresponding enum in ASTEnums
+    // This way ast nodes and modules that use them  don't even have to know of the existence of the Token class
+    // We make our interpreter more modular
 
     private ASTEnums toAstType(TType type){
         switch (type) {
