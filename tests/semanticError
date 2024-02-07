@@ -1,3 +1,4 @@
+// vim: set filetype=go:
 // testing our interpreter's semantic error detection capabilities
 string s = "global variable";
 
