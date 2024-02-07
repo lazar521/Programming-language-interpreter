@@ -1,4 +1,4 @@
-
+// vim: set filetype=go:
 // this code will cause multiple parsing errors
 
 fn void main(){
