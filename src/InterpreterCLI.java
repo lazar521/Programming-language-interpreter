@@ -76,9 +76,10 @@ public class InterpreterCLI {
         if(words.length == 1){
             switch(words[0]){
                 case "help":
+                    System.out.println("run [FILE_NAME]      ==>  It looks for the file in the '" + testFolder + "' folder and runs it");
+                    System.out.println("run tests            ==>  Runs all the files from the '" + testFolder + "' folder");
+                    System.out.println("list                 ==>  Lists files from the '" + testFolder + "' folder");
                     System.out.println("print on/off         ==>  Whether to print the abstract syntax tree after parsing or not");
-                    System.out.println("run [FILE_NAME]      ==>  It looks for the file in the 'tests' folder and runs it");
-                    System.out.println("run tests            ==>  Runs all the files from the 'tests' folder");
                     System.out.println("conf                 ==>  Shows current configuration");
                     System.out.println("exit                 ==>  Exits the interpreter");
                     break;
@@ -89,6 +90,10 @@ public class InterpreterCLI {
 
                 case "exit":
                     running = false;
+                    break;
+
+                case "list":
+                    listFiles();
                     break;
 
                 default:
@@ -128,7 +133,7 @@ public class InterpreterCLI {
 
     private void runTests(){
         File folder =  new File( System.getProperty("user.dir") + File.separator + testFolder );
-        
+
         if ( !folder.exists() || !folder.isDirectory() ){
             System.out.println("The '" + testFolder + "' folder doesn't exist");
             return;
@@ -147,7 +152,7 @@ public class InterpreterCLI {
     }
 
 
-    // Runs a specific file
+    // Runs a specific file from testFolder
 
     private void runFile(String fileName){
         String code;
@@ -211,7 +216,28 @@ public class InterpreterCLI {
     }
 
 
+
+    public void listFiles(){
+        File folder =  new File( System.getProperty("user.dir") + File.separator + testFolder );
+
+        if ( !folder.exists() || !folder.isDirectory() ){
+            System.out.println("The '" + testFolder + "' folder doesn't exist");
+            return;
+        }
+
+        String[] files = folder.list();
+
+        if(files == null){
+            System.out.println("The '" + testFolder + "' folder is empty");
+        }
+
+        System.out.println("\nAvailable programs:");
+        for(String file: files){
+            System.out.println(file);
+        }
+    }
     
+
     private void errorInfo(int phase){
         switch (phase) {
             case 0:
@@ -219,11 +245,11 @@ public class InterpreterCLI {
                 break;
             
             case 1:
-                System.out.println("An error during AST printing has occured");
+                System.out.println("An error has ocured during AST printing ");
                 break;
             
             case 2:
-                System.out.println("An error during semantic analysis has occured");
+                System.out.println("An error has occured during semantic analysis");
                 break;
 
             case 3:

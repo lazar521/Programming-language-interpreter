@@ -1,18 +1,18 @@
-int counter = 0;
 
+// Handling recursion like it's nothing
+int counter = 0;
 
 fn int main(){
     string hello = "Hello ";
     print(hello + strReturner(""));
-    print ("finished :)");
+    print ("finished");
     return 1;
 }
 
 fn string strReturner(string y){
     counter = counter + 1;
-    if(counter >= 60){
+    if(counter >= 20){
         return y;
     }
-    return strReturner(y + " Hi");
-    
+    return strReturner(y + " Hi"); 
 }

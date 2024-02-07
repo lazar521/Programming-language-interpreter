@@ -121,7 +121,7 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // declStmt -> ( varDecl ';' | 'fn' funcDecl  )                             
+    // declStmt -> ( varDecl ';' ) | ( 'fn' funcDecl  )                             
 
     private Stmt.DeclStmt parseDeclStmt(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -165,7 +165,7 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // forStmt -> for '(' varDecl? ';' expression? ';' expression? ')' '{' stmt* '}'
+    // forStmt -> 'for' '(' varDecl? ';' expression? ';' expression? ')' '{' stmt* '}'
 
     private Stmt.For parseForStmt(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -260,7 +260,7 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // varDecl -> (int | string) identifier ( '=' expression )? 
+    // varDecl -> ('int' | 'string') identifier ( '=' expression )? 
 
 
     private Decl.Var parseVarDecl(){
@@ -282,7 +282,8 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // funcDecl -> (int | string | void) identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
+    // funcDecl -> ('int' | 'string' | 'void') identifier '(' (param (',' param)* )? ')' '{' stmt* '}'
+
 
     private Decl.Func parseFuncDecl(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -317,7 +318,7 @@ public class Parser {
 
 
     // PRODUCTION RULE:
-    // param -> (int | string) identifier 
+    // param -> ('int' | 'string') identifier 
 
     private Decl.Param parseParamDecl(){
         int lineNumber = iter.getToken().getLineNumber();
@@ -546,8 +547,8 @@ public class Parser {
     // If we get a syntax error, we stop parsing that particular statement altogether and continue  
     // parsing the next one. We achieve this by skipping tokens until we reach one that matches the
     // start of some statement production rule. That way we can report more than one parsing errors
-    // Number of possible syntax error combinations is infinite so it is really hard for any method (incluiding this one) 
-    // to always work effectively and not report a cascade of false errors after encountering the first one
+    // Note that even with the syncrhonization, we might end up detecting a cascade of false errors 
+    // after the first one
 
     private void synchronize(){
         iter.advance();

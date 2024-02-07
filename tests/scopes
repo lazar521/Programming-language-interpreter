@@ -14,14 +14,24 @@ fn void main(){
 
 fn void x(){
 
+    print("Global X => " + intToStr(x));
+
+    int x = 8;
+
     for(int x=0; x<5 ; x=x+1){
         print("X inside loop => " + intToStr(x) );
     }
 
-    if(x){
+    
+    if(1){
         int x = 50;
         print("X from IF => " + intToStr(x));
+        
+        if(1){
+            int x = 500;
+            print("X from nested IF => " + intToStr(x));
+        }
     }
 
-    print("Global X => " + intToStr(x));
+    print("Local X => " + intToStr(x));
 } 
