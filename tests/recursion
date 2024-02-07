@@ -1,4 +1,4 @@
-
+// vim: set filetype=go:
 // Handling recursion like it's nothing
 int counter = 0;
 
