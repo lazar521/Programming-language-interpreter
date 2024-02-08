@@ -211,7 +211,7 @@ primary- > identifier
 # Implementation
 
 ## Overview
-I left a lot of commends in the code so I won't be going into too much detail on how exactly everything works.
+I left a lot of comments in the code so I won't be going into too much detail on how exactly everything works.
 
 The modules are divided into a few packages based on their responsibilities.
 
