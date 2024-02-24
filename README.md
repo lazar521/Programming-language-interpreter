@@ -115,13 +115,22 @@ Here's a list of all of the rules imposed on the language:
 
 1. The main() function must be present. It can return any data type (void, string or int) and mustn't have any parameters
 2. Nesting function declarations is not allowed
-3. Declaring variables inside loops is not allowed
-4. We cannot declare the same variable or function name in the same block scope
-5. Non-void type functions must have a return statement at the end that returns a value
-6. We must use appropriate data types with appropriate operators
-7. The interpreter provides a few built-in functions and their names are reserved
-8. Function calls must be performed with appropriate number of arguments and argument types
-9. Function calls cannot be used outside of any function (For example, we can't declare global variables like this ==>  int x = funcCall(); )
+3. Declaring variables inside loops is not allowed (except in FOR loop declaration section)
+4. Declaring the same variable or function name in the same block scope is not allowed
+5. Initializing variables in nested scopes WILL NOT initialize them in the outside scopes. Example:
+```c
+1  int x;
+2  for/if/while {
+3      x = 1;
+4      print(intToStr(x)); // this is OK
+5  }                   
+6  print(intToStr(x)); // x is treated as uninitalized here
+```
+6. Non-void type functions must have a return statement at the end that returns a value of an appropriate data type
+7. Appropriate data types must be used with appropriate operators
+8. The interpreter provides a few built-in functions and their names are reserved
+9. Function calls must be performed with appropriate number of arguments and argument types
+10. Function calls cannot be used outside of any function (For example, we can't declare global variables like this ==>  int x = funcCall(); )
 
 
 <br>

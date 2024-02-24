@@ -66,7 +66,9 @@ public class DeclarationtTable {
 
     // Calling isInitialized() on an undeclared variable will cause a runtime error
     public boolean isInitialized(String name){
-        return nameTable.get(name).peek().initalized;
+        int initLevel = nameTable.get(name).peek().initLevel;
+        // A variable should be initialized in the current or any outside code block (if it is initialized at all)
+        return (initLevel <= nestingLevel );
     }
 
     // Calling fetch() on an uninitialized variable will cause a runtime error
@@ -78,8 +80,8 @@ public class DeclarationtTable {
     // Calling assign() on an undeclared variable will cause a runtime error
     public void assign(String name,Object value){
         Variable var = nameTable.get(name).peek();
-        var.initalized = true;
-        var.value = value;
+        var.value = value; 
+        var.initLevel = (nestingLevel < var.initLevel ? nestingLevel : var.initLevel);
     }
 
 
@@ -116,16 +118,18 @@ public class DeclarationtTable {
 
     // Wrapper class to keep info about variables in the declaration table
     private static class Variable{
-        public boolean initalized;
+        public int initLevel;       // Indicates the lowest level of nesting here a variable had been initialized
         public ASTEnums type;
         public Object value;
         public int level;
 
         public Variable(ASTEnums type,int nestingLevel){
             this.type = type;
-            this.initalized = false;
+            this.initLevel = UNINITIALIZED;  
             this.value = null;
             this.level = nestingLevel;
         }
     }
+
+    private static int UNINITIALIZED = 9999;
 }

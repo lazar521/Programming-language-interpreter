@@ -22,7 +22,7 @@ fn void x(){
         print("X inside loop => " + intToStr(x) );
     }
 
-    
+
     if(1){
         int x = 50;
         print("X from IF => " + intToStr(x));
