@@ -1,3 +1,4 @@
+// vim: set filetype=go:
 // A test to show how scopes work in our interpreter 
 
 int x = 99999;
